@@ -36,6 +36,7 @@ password
 - Verdict modal.
 - MockRepository вместо backend.
 - DTO-слой `ApiSubmissionDto`, `ApiCheckResultDto`, `ApiAiReviewDto`, `ApiVerdictRequest` с именами полей из `openapi.yaml`.
+- Локальные SVG-иконки в `assets/icons/` из публичного набора Lucide, подключены через `flutter_svg`.
 - AppLogger с форматом логов:
 
 ```text
@@ -48,5 +49,5 @@ password
 При добавлении новых экранов держать этот стиль:
 
 ```text
-Продолжай в текущем стиле AutoCheck Premium High-Tech: глубокий фон #06070b, панели #0d0f17, острые углы, border 1px rgba(255,255,255,0.06), padding минимум 2rem внутри больших блоков, моноширинные uppercase label с letter-spacing, один главный акцент #00ff66 только микродозами. Не использовать готовые icon packs, glow-orbs, gradient blobs, большие border-radius и сине-фиолетовые SaaS-цвета.
+Продолжай в текущем стиле AutoCheck Premium High-Tech: глубокий фон #06070b, панели #0d0f17, острые углы, border 1px rgba(255,255,255,0.06), padding минимум 2rem внутри больших блоков, моноширинные uppercase label с letter-spacing, один главный акцент #00ff66 только микродозами. Не подключать тяжелые runtime icon packs: если нужна новая иконка, положи SVG из Lucide в assets/icons и добавь его в TechIcon. Не использовать glow-orbs, gradient blobs, большие border-radius и сине-фиолетовые SaaS-цвета.
 ```
