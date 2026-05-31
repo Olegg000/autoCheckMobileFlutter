@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import '../models/submission.dart';
 import '../services/app_logger.dart';
 import '../services/formatters.dart';
-import '../services/mock_repository.dart';
+import '../services/backend_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_chrome.dart';
 import '../widgets/tech_components.dart';
 import '../widgets/tech_icon.dart';
+import 'create_assignment_screen.dart';
+import 'statistics_screen.dart';
 import 'submission_details_screen.dart';
+import 'upload_submission_screen.dart';
 
-/// Главный экран эксперта: KPI, поиск и очередь проверок на mock-данных.
+/// Главный экран эксперта: KPI, поиск и очередь проверок из backend.
 class DashboardScreen extends StatefulWidget {
   const DashboardScreen({super.key});
 
@@ -19,7 +22,7 @@ class DashboardScreen extends StatefulWidget {
 }
 
 class _DashboardScreenState extends State<DashboardScreen> {
-  final _repository = MockRepository.instance;
+  final _repository = BackendRepository.instance;
   final _searchController = TextEditingController();
 
   late Future<_DashboardData> _future;
@@ -52,10 +55,40 @@ class _DashboardScreenState extends State<DashboardScreen> {
     );
   }
 
+  Future<void> _openCreateAssignment() async {
+    AppLogger.info('DashboardScreen', 'Create assignment screen opened');
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
+    );
+    if (changed == true && mounted) {
+      setState(() => _future = _load());
+    }
+  }
+
+  Future<void> _openUploadSubmission() async {
+    AppLogger.info('DashboardScreen', 'Upload submission screen opened');
+    final changed = await Navigator.of(context).push<bool>(
+      MaterialPageRoute(builder: (_) => const UploadSubmissionScreen()),
+    );
+    if (changed == true && mounted) {
+      setState(() => _future = _load());
+    }
+  }
+
+  Future<void> _openStatistics() async {
+    AppLogger.info('DashboardScreen', 'Statistics screen opened');
+    await Navigator.of(context).push<void>(
+      MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return AppChrome(
       onDashboard: () {},
+      onCreateAssignment: _openCreateAssignment,
+      onStatistics: _openStatistics,
+      onUploadSubmission: _openUploadSubmission,
       child: FutureBuilder<_DashboardData>(
         future: _future,
         builder: (context, snapshot) {
@@ -76,18 +109,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _HeroActions(
-                onCreate: () {
-                  AppLogger.info('DashboardScreen', 'Create assignment action requested');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Создание задания доступно в web demo')),
-                  );
-                },
-                onUpload: () {
-                  AppLogger.info('DashboardScreen', 'Upload submission action requested');
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Загрузка решения замокана в Flutter demo')),
-                  );
-                },
+                onCreate: _openCreateAssignment,
+                onUpload: _openUploadSubmission,
               ),
               const SizedBox(height: 64),
               _MetricGrid(stats: data.stats),

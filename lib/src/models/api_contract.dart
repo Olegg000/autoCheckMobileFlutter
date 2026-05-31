@@ -12,6 +12,8 @@ class ApiSubmissionDto {
     required this.status,
     this.candidateEmail,
     this.completedAt,
+    this.fileName,
+    this.gitUrl,
     this.totalScore,
     this.verdict,
   });
@@ -25,6 +27,8 @@ class ApiSubmissionDto {
   final String status;
   final int? totalScore;
   final String? verdict;
+  final String? fileName;
+  final String? gitUrl;
   final DateTime createdAt;
   final DateTime? completedAt;
 
@@ -37,6 +41,8 @@ class ApiSubmissionDto {
       candidateEmail: json['candidateEmail'] as String?,
       completedAt: _dateOrNull(json['completedAt']),
       createdAt: DateTime.parse(json['createdAt'].toString()),
+      fileName: jsonStringOrNull(json['fileName']),
+      gitUrl: jsonStringOrNull(json['gitUrl']),
       id: json['id'].toString(),
       status: json['status'].toString(),
       totalScore: _intOrNull(json['totalScore']),
@@ -55,6 +61,8 @@ class ApiSubmissionDto {
       'createdAt': createdAt.toIso8601String(),
     };
     if (candidateEmail != null) json['candidateEmail'] = candidateEmail;
+    if (fileName != null) json['fileName'] = fileName;
+    if (gitUrl != null) json['gitUrl'] = gitUrl;
     if (totalScore != null) json['totalScore'] = totalScore;
     if (verdict != null) json['verdict'] = verdict;
     if (completedAt != null) json['completedAt'] = completedAt!.toIso8601String();
@@ -71,7 +79,10 @@ class ApiSubmissionDto {
       candidateName: candidateFullName,
       completedAt: completedAt,
       createdAt: createdAt,
+      fileName: fileName,
+      gitUrl: gitUrl,
       score: totalScore,
+      sourceType: gitUrl == null ? SourceType.zip : SourceType.git,
       status: _submissionStatus(status, totalScore),
       verdict: _verdict(verdict),
     );
@@ -193,6 +204,12 @@ DateTime? _dateOrNull(Object? value) {
   final text = value.toString();
   if (text.isEmpty) return null;
   return DateTime.tryParse(text);
+}
+
+String? jsonStringOrNull(Object? value) {
+  if (value == null) return null;
+  final text = value.toString();
+  return text.isEmpty ? null : text;
 }
 
 SubmissionStatus _submissionStatus(String status, int? score) {

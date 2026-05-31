@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
+import '../models/submission.dart';
 import '../services/app_logger.dart';
-import '../services/mock_repository.dart';
+import '../services/backend_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/tech_background.dart';
 import '../widgets/tech_components.dart';
@@ -17,16 +18,19 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'expert@autocheck.ru');
-  final _passwordController = TextEditingController(text: 'password');
-  final _repository = MockRepository.instance;
+  final _emailController = TextEditingController(text: 'expert@autocheck.local');
+  final _fullNameController = TextEditingController(text: 'Алексей Морозов');
+  final _passwordController = TextEditingController(text: 'secret123');
+  final _repository = BackendRepository.instance;
 
   bool _loading = false;
   String? _error;
+  UserRole _role = UserRole.expert;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _fullNameController.dispose();
     _passwordController.dispose();
     super.dispose();
   }
@@ -61,11 +65,44 @@ class _LoginScreenState extends State<LoginScreen> {
       );
     } catch (error) {
       AppLogger.error('LoginScreen', 'Login request failed', error);
-      setState(() => _error = 'Неверный email или пароль');
+      setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) {
         setState(() => _loading = false);
       }
+    }
+  }
+
+  Future<void> _register() async {
+    final email = _emailController.text.trim();
+    final fullName = _fullNameController.text.trim();
+    final password = _passwordController.text;
+
+    if (email.isEmpty || fullName.isEmpty || password.length < 6) {
+      setState(() => _error = 'Заполните email, ФИО и пароль от 6 символов');
+      return;
+    }
+
+    setState(() {
+      _error = null;
+      _loading = true;
+    });
+
+    try {
+      AppLogger.info('LoginScreen', 'Register request started', {'email': email, 'role': _role.name});
+      await _repository.register(email: email, fullName: fullName, password: password, role: _role);
+      AppLogger.debug('LoginScreen', 'Register request completed', {'email': email});
+      if (!mounted) return;
+      Navigator.of(context).pushReplacement(
+        MaterialPageRoute<void>(
+          builder: (_) => const DashboardScreen(),
+        ),
+      );
+    } catch (error) {
+      AppLogger.error('LoginScreen', 'Register request failed', error);
+      setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
+    } finally {
+      if (mounted) setState(() => _loading = false);
     }
   }
 
@@ -102,18 +139,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                   child: _LoginForm(
                                     emailController: _emailController,
                                     error: _error,
+                                    fullNameController: _fullNameController,
                                     loading: _loading,
-                                    onDemo: (email) {
+                                    onDemo: (account) {
                                       AppLogger.debug(
                                         'LoginScreen',
                                         'Demo account selected',
-                                        {'email': email},
+                                        {'email': account.email},
                                       );
-                                      _emailController.text = email;
-                                      _passwordController.text = 'password';
+                                      _emailController.text = account.email;
+                                      _fullNameController.text = account.fullName;
+                                      _passwordController.text = account.password;
+                                      setState(() => _role = account.role);
                                     },
+                                    onRegister: _register,
+                                    onRoleChanged: (role) => setState(() => _role = role),
                                     onSubmit: _submit,
                                     passwordController: _passwordController,
+                                    role: _role,
                                   ),
                                 ),
                               )
@@ -123,18 +166,24 @@ class _LoginScreenState extends State<LoginScreen> {
                                 child: _LoginForm(
                                   emailController: _emailController,
                                   error: _error,
+                                  fullNameController: _fullNameController,
                                   loading: _loading,
-                                  onDemo: (email) {
+                                  onDemo: (account) {
                                     AppLogger.debug(
                                       'LoginScreen',
                                       'Demo account selected',
-                                      {'email': email},
+                                      {'email': account.email},
                                     );
-                                    _emailController.text = email;
-                                    _passwordController.text = 'password';
+                                    _emailController.text = account.email;
+                                    _fullNameController.text = account.fullName;
+                                    _passwordController.text = account.password;
+                                    setState(() => _role = account.role);
                                   },
+                                  onRegister: _register,
+                                  onRoleChanged: (role) => setState(() => _role = role),
                                   onSubmit: _submit,
                                   passwordController: _passwordController,
+                                  role: _role,
                                 ),
                               ),
                           ],
@@ -212,7 +261,7 @@ class _LoginHero extends StatelessWidget {
             ),
           ),
           const Spacer(),
-          const TechLabel('[ AUTH NODE: LOCAL MOCK / FLUTTER ]'),
+          const TechLabel('[ AUTH NODE: BACKEND / PORT 8080 ]'),
           const SizedBox(height: 12),
           Row(
             children: [
@@ -234,22 +283,62 @@ class _LoginHero extends StatelessWidget {
   }
 }
 
+class _DemoAccount {
+  const _DemoAccount({
+    required this.email,
+    required this.fullName,
+    required this.label,
+    required this.password,
+    required this.role,
+  });
+
+  static const expert = _DemoAccount(
+    email: 'expert@autocheck.local',
+    fullName: 'Алексей Морозов',
+    label: 'Эксперт',
+    password: 'secret123',
+    role: UserRole.expert,
+  );
+
+  static const candidate = _DemoAccount(
+    email: 'candidate@autocheck.local',
+    fullName: 'Иван Петров',
+    label: 'Кандидат',
+    password: 'secret123',
+    role: UserRole.candidate,
+  );
+
+  final String email;
+  final String fullName;
+  final String label;
+  final String password;
+  final UserRole role;
+}
+
 class _LoginForm extends StatelessWidget {
   const _LoginForm({
     required this.emailController,
+    required this.fullNameController,
     required this.loading,
     required this.onDemo,
+    required this.onRegister,
+    required this.onRoleChanged,
     required this.onSubmit,
     required this.passwordController,
+    required this.role,
     this.error,
   });
 
   final TextEditingController emailController;
+  final TextEditingController fullNameController;
   final TextEditingController passwordController;
   final bool loading;
   final String? error;
-  final ValueChanged<String> onDemo;
+  final ValueChanged<_DemoAccount> onDemo;
+  final ValueChanged<UserRole> onRoleChanged;
+  final VoidCallback onRegister;
   final VoidCallback onSubmit;
+  final UserRole role;
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +354,7 @@ class _LoginForm extends StatelessWidget {
         ),
         const SizedBox(height: 16),
         const Text(
-          'Используйте демо-логин, чтобы открыть моковую систему без backend.',
+          'Войдите в живой backend или создайте демо-пользователя в PostgreSQL.',
           style: TextStyle(color: AppColors.muted, height: 1.5),
         ),
         const SizedBox(height: 28),
@@ -273,17 +362,15 @@ class _LoginForm extends StatelessWidget {
           children: [
             Expanded(
               child: _DemoCard(
-                email: 'expert@autocheck.ru',
-                label: 'Эксперт',
-                onTap: () => onDemo('expert@autocheck.ru'),
+                account: _DemoAccount.expert,
+                onTap: () => onDemo(_DemoAccount.expert),
               ),
             ),
             const SizedBox(width: 12),
             Expanded(
               child: _DemoCard(
-                email: 'candidate@autocheck.ru',
-                label: 'Кандидат',
-                onTap: () => onDemo('candidate@autocheck.ru'),
+                account: _DemoAccount.candidate,
+                onTap: () => onDemo(_DemoAccount.candidate),
               ),
             ),
           ],
@@ -296,10 +383,39 @@ class _LoginForm extends StatelessWidget {
         ),
         const SizedBox(height: 18),
         _TechTextField(
+          controller: fullNameController,
+          icon: TechIconType.user,
+          label: 'ФИО',
+        ),
+        const SizedBox(height: 18),
+        _TechTextField(
           controller: passwordController,
           icon: TechIconType.lock,
           label: 'Пароль',
           obscureText: true,
+        ),
+        const SizedBox(height: 18),
+        Row(
+          children: UserRole.values.map((item) {
+            final active = role == item;
+            return Expanded(
+              child: InkWell(
+                onTap: () => onRoleChanged(item),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  decoration: BoxDecoration(
+                    color: active ? AppColors.accent : AppColors.panelDeep,
+                    border: Border.all(color: active ? AppColors.accent : AppColors.border),
+                  ),
+                  child: Text(
+                    item == UserRole.expert ? 'Эксперт' : 'Кандидат',
+                    textAlign: TextAlign.center,
+                    style: TechText.label.copyWith(color: active ? AppColors.background : AppColors.muted),
+                  ),
+                ),
+              ),
+            );
+          }).toList(),
         ),
         if (error != null) ...[
           const SizedBox(height: 18),
@@ -325,6 +441,16 @@ class _LoginForm extends StatelessWidget {
             onPressed: onSubmit,
           ),
         ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: TechButton(
+            label: 'Создать пользователя',
+            loading: loading,
+            onPressed: onRegister,
+            variant: TechButtonVariant.secondary,
+          ),
+        ),
       ],
     );
   }
@@ -332,13 +458,11 @@ class _LoginForm extends StatelessWidget {
 
 class _DemoCard extends StatelessWidget {
   const _DemoCard({
-    required this.email,
-    required this.label,
+    required this.account,
     required this.onTap,
   });
 
-  final String label;
-  final String email;
+  final _DemoAccount account;
   final VoidCallback onTap;
 
   @override
@@ -355,7 +479,7 @@ class _DemoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              label,
+                account.label,
               style: const TextStyle(
                 color: AppColors.text,
                 fontSize: 15,
@@ -364,7 +488,7 @@ class _DemoCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              email,
+                account.email,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: AppColors.dim),
             ),

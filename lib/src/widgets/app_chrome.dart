@@ -10,6 +10,9 @@ class AppChrome extends StatelessWidget {
   const AppChrome({
     required this.child,
     required this.onDashboard,
+    this.onCreateAssignment,
+    this.onStatistics,
+    this.onUploadSubmission,
     this.selected = 'dashboard',
     super.key,
   });
@@ -17,6 +20,9 @@ class AppChrome extends StatelessWidget {
   final Widget child;
   final String selected;
   final VoidCallback onDashboard;
+  final VoidCallback? onCreateAssignment;
+  final VoidCallback? onStatistics;
+  final VoidCallback? onUploadSubmission;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +37,10 @@ class AppChrome extends StatelessWidget {
                 children: [
                   if (wide)
                     _SideRail(
+                      onCreateAssignment: onCreateAssignment,
                       onDashboard: onDashboard,
+                      onStatistics: onStatistics,
+                      onUploadSubmission: onUploadSubmission,
                       selected: selected,
                     ),
                   Expanded(
@@ -65,12 +74,18 @@ class AppChrome extends StatelessWidget {
 
 class _SideRail extends StatelessWidget {
   const _SideRail({
+    required this.onCreateAssignment,
     required this.onDashboard,
+    required this.onStatistics,
+    required this.onUploadSubmission,
     required this.selected,
   });
 
   final String selected;
   final VoidCallback onDashboard;
+  final VoidCallback? onCreateAssignment;
+  final VoidCallback? onStatistics;
+  final VoidCallback? onUploadSubmission;
 
   @override
   Widget build(BuildContext context) {
@@ -129,7 +144,7 @@ class _SideRail extends StatelessWidget {
             children: [
               Container(height: 7, width: 7, color: AppColors.accent),
               const SizedBox(width: 10),
-              const Text('Mock API online', style: TextStyle(color: AppColors.muted)),
+              const Text('Backend API online', style: TextStyle(color: AppColors.muted)),
             ],
           ),
           const SizedBox(height: 24),
@@ -142,28 +157,22 @@ class _SideRail extends StatelessWidget {
             onTap: onDashboard,
           ),
           _NavItem(
-            active: false,
+            active: selected == 'upload',
             icon: TechIconType.upload,
             label: 'Загрузка',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('В Flutter demo загрузка замокана')),
-            ),
+            onTap: onUploadSubmission ?? () => Navigator.of(context).pushNamed('/submissions/new'),
           ),
           _NavItem(
-            active: false,
+            active: selected == 'create',
             icon: TechIconType.plus,
             label: 'Создать задание',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Создание задания доступно в web demo')),
-            ),
+            onTap: onCreateAssignment ?? () => Navigator.of(context).pushNamed('/assignments/new'),
           ),
           _NavItem(
-            active: false,
+            active: selected == 'statistics',
             icon: TechIconType.chart,
             label: 'Статистика',
-            onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Статистика показана на dashboard')),
-            ),
+            onTap: onStatistics ?? () => Navigator.of(context).pushNamed('/statistics'),
           ),
         ],
       ),
@@ -296,7 +305,7 @@ class _TopBar extends StatelessWidget {
                     fontWeight: FontWeight.w800,
                   ),
                 ),
-                TechLabel('expert@autocheck.ru'),
+                TechLabel('expert@autocheck.local'),
               ],
             ),
           const SizedBox(width: 14),

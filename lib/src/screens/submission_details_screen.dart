@@ -1,9 +1,11 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../models/submission.dart';
 import '../services/app_logger.dart';
 import '../services/formatters.dart';
-import '../services/mock_repository.dart';
+import '../services/backend_repository.dart';
 import '../theme/app_theme.dart';
 import '../widgets/app_chrome.dart';
 import '../widgets/tech_components.dart';
@@ -23,22 +25,41 @@ class SubmissionDetailsScreen extends StatefulWidget {
 }
 
 class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
-  final _repository = MockRepository.instance;
+  final _repository = BackendRepository.instance;
 
   late Future<_DetailsData> _future;
+  Timer? _pollTimer;
   bool _rerunLoading = false;
 
   @override
   void initState() {
     super.initState();
     _future = _load();
+    _startPolling();
+  }
+
+  @override
+  void dispose() {
+    _pollTimer?.cancel();
+    super.dispose();
+  }
+
+  void _startPolling() {
+    _pollTimer?.cancel();
+    _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
+      if (!mounted) return;
+      setState(() => _future = _load());
+    });
   }
 
   Future<_DetailsData> _load() async {
     final submission = await _repository.submissionById(widget.submissionId);
     final results = await _repository.results(widget.submissionId);
-    final review = await _repository.aiReview(widget.submissionId);
+    final review = await _loadAiReview();
     final timeline = await _repository.timeline(submission);
+    if (submission.status != SubmissionStatus.pending && submission.status != SubmissionStatus.running) {
+      _pollTimer?.cancel();
+    }
     return _DetailsData(
       review: review,
       results: results,
@@ -47,12 +68,26 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
     );
   }
 
+  Future<AiReview> _loadAiReview() async {
+    try {
+      return await _repository.aiReview(widget.submissionId);
+    } catch (error) {
+      AppLogger.error('SubmissionDetailsScreen', 'AI review load failed', error);
+      return const AiReview(
+        summary: 'AI-анализ недоступен: backend не вернул рекомендации.',
+        good: [],
+        improvements: [],
+      );
+    }
+  }
+
   Future<void> _rerun() async {
     setState(() => _rerunLoading = true);
     try {
       AppLogger.info('SubmissionDetailsScreen', 'Rerun requested', {'submissionId': widget.submissionId});
       await _repository.rerun(widget.submissionId);
       AppLogger.debug('SubmissionDetailsScreen', 'Rerun completed', {'submissionId': widget.submissionId});
+      _startPolling();
       setState(() => _future = _load());
     } catch (error) {
       AppLogger.error('SubmissionDetailsScreen', 'Rerun failed', error);
@@ -74,7 +109,7 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
         'Verdict update started',
         {'submissionId': widget.submissionId, 'verdict': verdict.name},
       );
-      await _repository.updateVerdict(widget.submissionId, verdict);
+      await _repository.updateVerdict(widget.submissionId, verdict, comment);
       AppLogger.debug(
         'SubmissionDetailsScreen',
         'Verdict update completed',
@@ -100,6 +135,29 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
       child: FutureBuilder<_DetailsData>(
         future: _future,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return TechPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const TechLabel('Backend error'),
+                  const SizedBox(height: 12),
+                  Text(
+                    snapshot.error.toString().replaceFirst('Exception: ', ''),
+                    style: const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
+                  ),
+                  const SizedBox(height: 20),
+                  TechButton(
+                    icon: TechIconType.refresh,
+                    label: 'Повторить',
+                    onPressed: () => setState(() => _future = _load()),
+                    variant: TechButtonVariant.secondary,
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (!snapshot.hasData) {
             return const TechPanel(
               child: SizedBox(
@@ -121,14 +179,17 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
               _DetailsHeader(
                 loading: _rerunLoading,
                 onAccept: () => _updateVerdict(Verdict.accepted),
-                onExport: () {
+                onExport: () async {
                   AppLogger.info(
                     'SubmissionDetailsScreen',
                     'Report export requested',
                     {'submissionId': widget.submissionId},
                   );
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('HTML-отчет подготовлен мок-сервером')),
+                  final report = await _repository.report(widget.submissionId);
+                  if (!context.mounted) return;
+                  await showDialog<void>(
+                    context: context,
+                    builder: (_) => _ReportDialog(report: report),
                   );
                 },
                 onReject: () => _updateVerdict(Verdict.rejected),
@@ -710,6 +771,56 @@ class _VerdictDialogState extends State<_VerdictDialog> {
                     onPressed: () => Navigator.of(context).pop(_controller.text),
                   ),
                 ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ReportDialog extends StatelessWidget {
+  const _ReportDialog({required this.report});
+
+  final String report;
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      insetPadding: const EdgeInsets.all(22),
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 720),
+        child: TechPanel(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  Expanded(child: Text('JSON-отчет', style: Theme.of(context).textTheme.titleLarge)),
+                  InkWell(
+                    onTap: () => Navigator.of(context).pop(),
+                    child: Container(
+                      height: 38,
+                      width: 38,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(border: Border.all(color: AppColors.border)),
+                      child: const TechIcon(TechIconType.close, color: AppColors.muted),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 420),
+                child: SingleChildScrollView(
+                  child: Text(
+                    report,
+                    style: const TextStyle(color: AppColors.muted, fontFamily: 'monospace', height: 1.45),
+                  ),
+                ),
               ),
             ],
           ),
