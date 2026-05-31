@@ -1,14 +1,13 @@
-import 'package:file_picker/file_picker.dart';
+// import 'package:file_picker/file_picker.dart';
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/screens/submission_details_screen.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart';
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_chrome.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
-import 'submission_details_screen.dart';
 
 class UploadSubmissionScreen extends StatefulWidget {
   const UploadSubmissionScreen({super.key});
@@ -25,7 +24,7 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
 
   late Future<List<Assignment>> _assignmentsFuture;
   String? _assignmentId;
-  PlatformFile? _file;
+  // PlatformFile? _file;
   SourceType _sourceType = SourceType.zip;
   bool _loading = false;
   String? _error;
@@ -44,19 +43,19 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
     super.dispose();
   }
 
-  Future<void> _pickZip() async {
-    final result = await FilePicker.pickFiles(
-      allowMultiple: false,
-      type: FileType.custom,
-      allowedExtensions: const ['zip'],
-      withData: true,
-    );
-    if (result == null || result.files.isEmpty) return;
-    setState(() {
-      _file = result.files.single;
-      _error = null;
-    });
-  }
+  // Future<void> _pickZip() async {
+  //   final result = await FilePicker.pickFiles(
+  //     allowMultiple: false,
+  //     type: FileType.custom,
+  //     allowedExtensions: const ['zip'],
+  //     withData: true,
+  //   );
+  //   if (result == null || result.files.isEmpty) return;
+  //   setState(() {
+  //     _file = result.files.single;
+  //     _error = null;
+  //   });
+  // }
 
   Future<void> _submit() async {
     if (_assignmentId == null || _assignmentId!.isEmpty) {
@@ -67,10 +66,10 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
       setState(() => _error = 'Введите ФИО и корректный email кандидата');
       return;
     }
-    if (_sourceType == SourceType.zip && _file == null) {
-      setState(() => _error = 'Выберите ZIP-архив решения');
-      return;
-    }
+    // if (_sourceType == SourceType.zip && _file == null) {
+    //   setState(() => _error = 'Выберите ZIP-архив решения');
+    //   return;
+    // }
     if (_sourceType == SourceType.git && !_gitUrl.text.trim().startsWith('http')) {
       setState(() => _error = 'Введите публичный Git URL');
       return;
@@ -89,7 +88,7 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
         assignmentId: _assignmentId!,
         candidateEmail: _candidateEmail.text.trim(),
         candidateFullName: _candidateName.text.trim(),
-        file: _sourceType == SourceType.zip ? _file : null,
+        // file: _sourceType == SourceType.zip ? _file : null,
         gitUrl: _sourceType == SourceType.git ? _gitUrl.text.trim() : null,
       );
       AppLogger.debug('UploadSubmissionScreen', 'Submission upload completed', {'submissionId': submission.id});
@@ -125,22 +124,22 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TechLabel('Sprint-2 / intake terminal'),
-              const SizedBox(height: 18),
+               TechLabel('Sprint-2 / intake terminal'),
+               SizedBox(height: 18),
               Text('Загрузка решения', style: Theme.of(context).textTheme.displayLarge),
-              const SizedBox(height: 20),
-              const Text('Отправьте ZIP-архив или Git URL прямо в backend. Проверка попадет в Redis-очередь.', style: TextStyle(color: AppColors.muted)),
-              const SizedBox(height: 44),
+               SizedBox(height: 20),
+               Text('Отправьте ZIP-архив или Git URL прямо в backend. Проверка попадет в Redis-очередь.', style: TextStyle(color: AppColors.muted)),
+               SizedBox(height: 44),
               TechPanel(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     TechLabel('Тестовое задание'),
-                    const SizedBox(height: 10),
+                     SizedBox(height: 10),
                     DropdownButtonFormField<String>(
                       value: _assignmentId,
                       dropdownColor: AppColors.panel,
-                      decoration: const InputDecoration(
+                      decoration:  InputDecoration(
                         filled: true,
                         fillColor: AppColors.panelDeep,
                         enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border)),
@@ -149,17 +148,17 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
                       items: assignments.map((item) => DropdownMenuItem(value: item.id, child: Text(item.title))).toList(),
                       onChanged: (value) => setState(() => _assignmentId = value),
                     ),
-                    const SizedBox(height: 18),
+                     SizedBox(height: 18),
                     _Field(label: 'ФИО кандидата', controller: _candidateName),
-                    const SizedBox(height: 18),
+                     SizedBox(height: 18),
                     _Field(label: 'Email кандидата', controller: _candidateEmail),
                     const SizedBox(height: 22),
                     _SourceSwitch(value: _sourceType, onChanged: (value) => setState(() => _sourceType = value)),
                     const SizedBox(height: 22),
-                    if (_sourceType == SourceType.zip)
-                      _ZipPicker(file: _file, onPick: _pickZip)
-                    else
-                      _Field(label: 'Git URL', controller: _gitUrl),
+                    // if (_sourceType == SourceType.zip)
+                    //   _ZipPicker(file: _file, onPick: _pickZip)
+                    // else
+                    //   _Field(label: 'Git URL', controller: _gitUrl),
                     if (_error != null) ...[
                       const SizedBox(height: 18),
                       _ErrorPanel(_error!),
@@ -219,9 +218,9 @@ class _SourceSwitch extends StatelessWidget {
 }
 
 class _ZipPicker extends StatelessWidget {
-  const _ZipPicker({required this.file, required this.onPick});
+  const _ZipPicker({ required this.onPick});
 
-  final PlatformFile? file;
+  // final PlatformFile? file;
   final VoidCallback onPick;
 
   @override
@@ -236,12 +235,12 @@ class _ZipPicker extends StatelessWidget {
           children: [
             const TechIcon(TechIconType.upload, color: AppColors.accent),
             const SizedBox(width: 14),
-            Expanded(
-              child: Text(
-                file?.name ?? 'Выбрать ZIP-архив',
-                style: TextStyle(color: file == null ? AppColors.muted : AppColors.text, fontWeight: FontWeight.w700),
-              ),
-            ),
+            // Expanded(
+            //   child: Text(
+            //     file?.name ?? 'Выбрать ZIP-архив',
+            //     style: TextStyle(color: file == null ? AppColors.muted : AppColors.text, fontWeight: FontWeight.w700),
+            //   ),
+            // ),
           ],
         ),
       ),

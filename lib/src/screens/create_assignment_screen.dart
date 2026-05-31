@@ -1,12 +1,11 @@
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart';
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_chrome.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
 
 class CreateAssignmentScreen extends StatefulWidget {
   const CreateAssignmentScreen({super.key});
@@ -88,49 +87,49 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TechLabel('Sprint-3 / assignment control'),
-          const SizedBox(height: 18),
+          TechLabel('Sprint-3 / assignment control'),
+          SizedBox(height: 18),
           Text('Создание тестового задания', style: Theme.of(context).textTheme.displayLarge),
-          const SizedBox(height: 20),
-          const Text('Настройте чекеры и веса. Backend принимает задание только при сумме 100%.', style: TextStyle(color: AppColors.muted)),
-          const SizedBox(height: 44),
+          SizedBox(height: 20),
+          Text('Настройте чекеры и веса. Backend принимает задание только при сумме 100%.', style: TextStyle(color: AppColors.muted)),
+          SizedBox(height: 44),
           TechPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _Field(label: 'Название задания', controller: _title),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _Field(label: 'Технологии', controller: _technologies),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _Field(label: 'Описание', controller: _description, lines: 4),
-                const SizedBox(height: 18),
+                SizedBox(height: 18),
                 _Field(label: 'Инструкция кандидату', controller: _instructions, lines: 5),
               ],
             ),
           ),
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
           TechPanel(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Row(
                   children: [
-                    const TechIcon(TechIconType.activity, color: AppColors.accent),
-                    const SizedBox(width: 12),
+                    TechIcon(TechIconType.activity, color: AppColors.accent),
+                    SizedBox(width: 12),
                     Expanded(child: Text('Чекеры и веса', style: Theme.of(context).textTheme.titleLarge)),
                     Text('$_totalWeight%', style: TechText.monoValue.copyWith(fontSize: 24, color: _totalWeight == 100 ? AppColors.accent : AppColors.danger)),
                   ],
                 ),
-                const SizedBox(height: 22),
+                SizedBox(height: 22),
                 ..._checkers.map((item) => _CheckerRow(
                       config: item,
                       onChanged: (next) => _updateChecker(item.checker, next),
                     )),
                 if (_error != null) ...[
-                  const SizedBox(height: 18),
+                  SizedBox(height: 18),
                   _ErrorPanel(_error!),
                 ],
-                const SizedBox(height: 24),
+                SizedBox(height: 24),
                 Wrap(
                   spacing: 12,
                   runSpacing: 12,
@@ -159,8 +158,8 @@ class _CheckerRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      padding: const EdgeInsets.all(16),
+      margin: EdgeInsets.only(bottom: 12),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(color: AppColors.panelDeep, border: Border.all(color: AppColors.border)),
       child: Column(
         children: [
@@ -171,7 +170,7 @@ class _CheckerRow extends StatelessWidget {
                 activeColor: AppColors.accent,
                 onChanged: (value) => onChanged(config.copyWith(enabled: value ?? false)),
               ),
-              Expanded(child: Text(checkerLabel(config.checker), style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w800))),
+              Expanded(child: Text(checkerLabel(config.checker), style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800))),
               Text('${config.weight}%', style: TechText.label.copyWith(color: AppColors.accent)),
             ],
           ),
@@ -229,9 +228,9 @@ class _ErrorPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(16),
       decoration: BoxDecoration(color: AppColors.danger.withOpacity(0.1), border: Border.all(color: AppColors.danger.withOpacity(0.35))),
-      child: Text(text, style: const TextStyle(color: Color(0xFFFF7A3D))),
+      child: Text(text, style: TextStyle(color: Color(0xFFFF7A3D))),
     );
   }
 }

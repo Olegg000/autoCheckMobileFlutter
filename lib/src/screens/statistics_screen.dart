@@ -1,12 +1,11 @@
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart' show BackendRepository;
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_chrome.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({super.key});
@@ -47,13 +46,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TechLabel('Statistics error'),
-                  const SizedBox(height: 12),
+                  TechLabel('Statistics error'),
+                  SizedBox(height: 12),
                   Text(
                     snapshot.error.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
+                    style: TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
                   ),
-                  const SizedBox(height: 20),
+                  SizedBox(height: 20),
                   TechButton(
                     icon: TechIconType.refresh,
                     label: 'Повторить',
@@ -66,7 +65,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           }
 
           if (!snapshot.hasData) {
-            return const TechPanel(
+            return TechPanel(
               child: SizedBox(
                 height: 220,
                 child: Center(
@@ -80,17 +79,17 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const TechLabel('Sprint-4 / telemetry'),
-              const SizedBox(height: 18),
+              TechLabel('Sprint-4 / telemetry'),
+              SizedBox(height: 18),
               Text('Статистика', style: Theme.of(context).textTheme.displayLarge),
-              const SizedBox(height: 20),
-              const Text(
+              SizedBox(height: 20),
+              Text(
                 'Метрики AutoCheck и рейтинг кандидатов из реального backend.',
                 style: TextStyle(color: AppColors.muted, fontSize: 16, height: 1.55),
               ),
-              const SizedBox(height: 48),
+              SizedBox(height: 48),
               _MetricGrid(stats: data.stats),
-              const SizedBox(height: 32),
+              SizedBox(height: 32),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= 980;
@@ -100,7 +99,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     return Column(
                       children: [
                         chart,
-                        const SizedBox(height: 28),
+                        SizedBox(height: 28),
                         ranking,
                       ],
                     );
@@ -109,7 +108,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Expanded(flex: 3, child: chart),
-                      const SizedBox(width: 28),
+                      SizedBox(width: 28),
                       Expanded(flex: 2, child: ranking),
                     ],
                   );
@@ -167,26 +166,26 @@ class _DailyChart extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TechLabel('Runtime chart'),
-          const SizedBox(height: 10),
+          TechLabel('Runtime chart'),
+          SizedBox(height: 10),
           Text('Динамика проверок', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 28),
+          SizedBox(height: 28),
           SizedBox(
             height: 260,
             child: visible.isEmpty
-                ? const Center(child: Text('Пока нет данных', style: TextStyle(color: AppColors.muted)))
+                ? Center(child: Text('Пока нет данных', style: TextStyle(color: AppColors.muted)))
                 : Row(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: visible.map((item) {
                       final height = 28 + (item.count / maxCount) * 190;
                       return Expanded(
                         child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 5),
+                          padding: EdgeInsets.symmetric(horizontal: 5),
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.end,
                             children: [
                               Text(item.count.toString(), style: TechText.label.copyWith(color: AppColors.text)),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Container(
                                 height: height,
                                 decoration: BoxDecoration(
@@ -194,7 +193,7 @@ class _DailyChart extends StatelessWidget {
                                   border: Border.all(color: AppColors.accent.withOpacity(0.55)),
                                 ),
                               ),
-                              const SizedBox(height: 8),
+                              SizedBox(height: 8),
                               Text(item.date.length >= 5 ? item.date.substring(item.date.length - 5) : item.date, style: TechText.label),
                             ],
                           ),
@@ -220,42 +219,44 @@ class _TopCandidates extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TechLabel('Candidate ranking'),
-          const SizedBox(height: 10),
+          TechLabel('Candidate ranking'),
+          SizedBox(height: 10),
           Text('Топ кандидатов', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 24),
+          SizedBox(height: 24),
           if (items.isEmpty)
-            const Text('Пока нет кандидатов', style: TextStyle(color: AppColors.muted))
+            Text('Пока нет кандидатов', style: TextStyle(color: AppColors.muted))
           else
-            ...items.take(10).map((candidate) {
-              final index = items.indexOf(candidate) + 1;
-              return Container(
-                margin: const EdgeInsets.only(bottom: 12),
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(color: AppColors.panelDeep, border: Border.all(color: AppColors.border)),
-                child: Row(
-                  children: [
-                    Text(index.toString().padLeft(2, '0'), style: TechText.label.copyWith(color: AppColors.accent)),
-                    const SizedBox(width: 14),
-                    Expanded(
-                      child: Text(
-                        candidate.fullName,
-                        style: const TextStyle(color: AppColors.text, fontWeight: FontWeight.w800),
+            ...items.take(10).map(
+              (candidate) {
+                final index = items.indexOf(candidate) + 1;
+                return Container(
+                  margin: EdgeInsets.only(bottom: 12),
+                  padding: EdgeInsets.all(16),
+                  decoration: BoxDecoration(color: AppColors.panelDeep, border: Border.all(color: AppColors.border)),
+                  child: Row(
+                    children: [
+                      Text(index.toString().padLeft(2, '0'), style: TechText.label.copyWith(color: AppColors.accent)),
+                      SizedBox(width: 14),
+                      Expanded(
+                        child: Text(
+                          candidate.fullName,
+                          style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800),
+                        ),
                       ),
-                    ),
-                    Text(
-                      candidate.bestScore.toStringAsFixed(1),
-                      style: TextStyle(
-                        color: scoreColor(candidate.bestScore.round()),
-                        fontFamily: 'monospace',
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                      Text(
+                        candidate.bestScore.toStringAsFixed(1),
+                        style: TextStyle(
+                          color: scoreColor(candidate.bestScore.round()),
+                          fontFamily: 'monospace',
+                          fontSize: 18,
+                          fontWeight: FontWeight.w900,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              );
-            }),
+                    ],
+                  ),
+                );
+              },
+            ),
         ],
       ),
     );

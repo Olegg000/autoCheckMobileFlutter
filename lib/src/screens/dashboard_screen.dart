@@ -1,17 +1,16 @@
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/screens/create_assignment_screen.dart';
+import 'package:autocheck_flutter/src/screens/statistics_screen.dart';
+import 'package:autocheck_flutter/src/screens/submission_details_screen.dart';
+import 'package:autocheck_flutter/src/screens/upload_submission_screen.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart';
+import 'package:autocheck_flutter/src/services/formatters.dart';
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/formatters.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_chrome.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
-import 'create_assignment_screen.dart';
-import 'statistics_screen.dart';
-import 'submission_details_screen.dart';
-import 'upload_submission_screen.dart';
 
 /// Главный экран эксперта: KPI, поиск и очередь проверок из backend.
 class DashboardScreen extends StatefulWidget {
@@ -58,7 +57,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _openCreateAssignment() async {
     AppLogger.info('DashboardScreen', 'Create assignment screen opened');
     final changed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const CreateAssignmentScreen()),
+      MaterialPageRoute(builder: (_) => CreateAssignmentScreen()),
     );
     if (changed == true && mounted) {
       setState(() => _future = _load());
@@ -68,7 +67,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _openUploadSubmission() async {
     AppLogger.info('DashboardScreen', 'Upload submission screen opened');
     final changed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(builder: (_) => const UploadSubmissionScreen()),
+      MaterialPageRoute(builder: (_) => UploadSubmissionScreen()),
     );
     if (changed == true && mounted) {
       setState(() => _future = _load());
@@ -78,7 +77,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Future<void> _openStatistics() async {
     AppLogger.info('DashboardScreen', 'Statistics screen opened');
     await Navigator.of(context).push<void>(
-      MaterialPageRoute(builder: (_) => const StatisticsScreen()),
+      MaterialPageRoute(builder: (_) => StatisticsScreen()),
     );
   }
 
@@ -93,16 +92,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const _LoadingPanel(label: 'Загружаем dashboard');
+            return _LoadingPanel(label: 'Загружаем dashboard');
           }
 
           final data = snapshot.data!;
           final submissions = data.submissions.where((item) {
             final query = _search.toLowerCase();
             if (query.isEmpty) return true;
-            return item.candidateName.toLowerCase().contains(query) ||
-                item.candidateEmail.toLowerCase().contains(query) ||
-                item.assignmentTitle.toLowerCase().contains(query);
+            return item.candidateName.toLowerCase().contains(query) || item.candidateEmail.toLowerCase().contains(query) || item.assignmentTitle.toLowerCase().contains(query);
           }).toList();
 
           return Column(
@@ -112,26 +109,26 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 onCreate: _openCreateAssignment,
                 onUpload: _openUploadSubmission,
               ),
-              const SizedBox(height: 64),
+              SizedBox(height: 64),
               _MetricGrid(stats: data.stats),
-              const SizedBox(height: 64),
+              SizedBox(height: 64),
               TechPanel(
-                padding: const EdgeInsets.all(32),
+                padding: EdgeInsets.all(32),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const TechLabel('Queue monitor'),
-                    const SizedBox(height: 10),
+                    TechLabel('Queue monitor'),
+                    SizedBox(height: 10),
                     Text(
                       'Все проверки',
                       style: Theme.of(context).textTheme.headlineMedium,
                     ),
-                    const SizedBox(height: 26),
+                    SizedBox(height: 26),
                     _SearchField(
                       controller: _searchController,
                       onChanged: (value) => setState(() => _search = value),
                     ),
-                    const SizedBox(height: 24),
+                    SizedBox(height: 24),
                     ...submissions.take(14).map(
                           (submission) => _SubmissionRow(
                             submission: submission,
@@ -184,14 +181,14 @@ class _HeroActions extends StatelessWidget {
         final copy = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const TechLabel('AutoCheck dashboard / expert node'),
-            const SizedBox(height: 18),
+            TechLabel('AutoCheck dashboard / expert node'),
+            SizedBox(height: 18),
             Text(
               'Панель управления',
               style: Theme.of(context).textTheme.displayLarge,
             ),
-            const SizedBox(height: 20),
-            const Text(
+            SizedBox(height: 20),
+            Text(
               'Контролируйте проверки, фильтруйте кандидатов и открывайте карточки результатов.',
               style: TextStyle(
                 color: AppColors.muted,
@@ -207,7 +204,7 @@ class _HeroActions extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               copy,
-              const SizedBox(height: 26),
+              SizedBox(height: 26),
               actions,
             ],
           );
@@ -217,7 +214,7 @@ class _HeroActions extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Expanded(child: copy),
-            const SizedBox(width: 32),
+            SizedBox(width: 32),
             actions,
           ],
         );
@@ -301,8 +298,8 @@ class _SearchField extends StatelessWidget {
     return TextField(
       controller: controller,
       onChanged: onChanged,
-      style: const TextStyle(color: AppColors.text),
-      decoration: const InputDecoration(
+      style: TextStyle(color: AppColors.text),
+      decoration: InputDecoration(
         filled: true,
         fillColor: AppColors.panelDeep,
         hintText: 'Живой поиск по ФИО, email или заданию',
@@ -339,8 +336,8 @@ class _SubmissionRow extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(18),
+        margin: EdgeInsets.only(bottom: 12),
+        padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.panelDeep,
           border: Border.all(color: AppColors.border),
@@ -364,25 +361,25 @@ class _SubmissionRow extends StatelessWidget {
                     size: 22,
                   ),
                 ),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
                         submission.candidateName,
-                        style: const TextStyle(
+                        style: TextStyle(
                           color: AppColors.text,
                           fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 5),
+                      SizedBox(height: 5),
                       Text(
                         '${submission.assignmentTitle} / ${submission.candidateEmail}',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(color: AppColors.muted),
+                        style: TextStyle(color: AppColors.muted),
                       ),
                     ],
                   ),
@@ -394,7 +391,7 @@ class _SubmissionRow extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               children: [
                 StatusBadge(status: submission.status),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Text(
                   submission.score?.toString() ?? '--',
                   style: TextStyle(
@@ -404,8 +401,8 @@ class _SubmissionRow extends StatelessWidget {
                     fontWeight: FontWeight.w900,
                   ),
                 ),
-                const SizedBox(width: 12),
-                const TechIcon(TechIconType.chevronRight, color: AppColors.muted, size: 18),
+                SizedBox(width: 12),
+                TechIcon(TechIconType.chevronRight, color: AppColors.muted, size: 18),
               ],
             );
 
@@ -414,7 +411,7 @@ class _SubmissionRow extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   left,
-                  const SizedBox(height: 16),
+                  SizedBox(height: 16),
                   right,
                 ],
               );
@@ -423,12 +420,12 @@ class _SubmissionRow extends StatelessWidget {
             return Row(
               children: [
                 Expanded(child: left),
-                const SizedBox(width: 16),
+                SizedBox(width: 16),
                 Text(
                   formatDateTime(submission.createdAt),
                   style: TechText.label,
                 ),
-                const SizedBox(width: 24),
+                SizedBox(width: 24),
                 right,
               ],
             );
@@ -453,7 +450,7 @@ class _LoadingPanel extends StatelessWidget {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const SizedBox(
+              SizedBox(
                 height: 18,
                 width: 18,
                 child: CircularProgressIndicator(
@@ -461,8 +458,8 @@ class _LoadingPanel extends StatelessWidget {
                   strokeWidth: 1.5,
                 ),
               ),
-              const SizedBox(width: 14),
-              Text(label, style: const TextStyle(color: AppColors.muted)),
+              SizedBox(width: 14),
+              Text(label, style: TextStyle(color: AppColors.muted)),
             ],
           ),
         ),

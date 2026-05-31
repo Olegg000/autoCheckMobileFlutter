@@ -1,8 +1,6 @@
 import 'dart:convert';
-
-import 'package:file_picker/file_picker.dart';
+// import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
-
 import '../models/api_contract.dart';
 import '../models/submission.dart';
 import 'app_logger.dart';
@@ -26,7 +24,7 @@ class BackendRepository {
 
   static const _baseUrl = String.fromEnvironment(
     'AUTOCHECK_API_URL',
-    defaultValue: 'http://localhost:8080/api/v1',
+    defaultValue: 'https://hrmanager.vrsalex.ru/api/v1',
   );
 
   String? _token;
@@ -166,7 +164,7 @@ class BackendRepository {
     required String assignmentId,
     required String candidateEmail,
     required String candidateFullName,
-    PlatformFile? file,
+    // PlatformFile? file,
     String? gitUrl,
   }) async {
     AppLogger.info('BackendRepository', 'POST /submissions', {
@@ -184,14 +182,14 @@ class BackendRepository {
       request.fields['gitUrl'] = gitUrl.trim();
     }
 
-    if (file != null) {
-      final bytes = file.bytes;
-      if (bytes == null) {
-        throw Exception('Файл не загружен в память. Выберите ZIP ещё раз.');
-      }
-      request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
-    }
-
+    // if (file != null) {
+    //   final bytes = file.bytes;
+    //   if (bytes == null) {
+    //     throw Exception('Файл не загружен в память. Выберите ZIP ещё раз.');
+    //   }
+    //   request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
+    // }
+    //
     final streamed = await request.send();
     final response = await http.Response.fromStream(streamed);
     final data = _asMap(_unwrap(response.statusCode, response.body));

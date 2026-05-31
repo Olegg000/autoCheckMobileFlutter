@@ -1,13 +1,12 @@
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/screens/dashboard_screen.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart';
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/tech_background.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/tech_background.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
-import 'dashboard_screen.dart';
 
 /// Экран авторизации эксперта с demo credentials и логированием входа.
 class LoginScreen extends StatefulWidget {
@@ -60,7 +59,7 @@ class _LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
-          builder: (_) => const DashboardScreen(),
+          builder: (_) => DashboardScreen(),
         ),
       );
     } catch (error) {
@@ -114,9 +113,9 @@ class _LoginScreenState extends State<LoginScreen> {
         body: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(24),
+              padding: EdgeInsets.all(24),
               child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 1120),
+                constraints: BoxConstraints(maxWidth: 1120),
                 child: LayoutBuilder(
                   builder: (context, constraints) {
                     final wide = constraints.maxWidth >= 900;
@@ -127,7 +126,7 @@ class _LoginScreenState extends State<LoginScreen> {
                           direction: wide ? Axis.horizontal : Axis.vertical,
                           children: [
                             if (wide)
-                              const Expanded(
+                              Expanded(
                                 flex: 11,
                                 child: _LoginHero(),
                               ),
@@ -135,7 +134,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               Expanded(
                                 flex: 9,
                                 child: Padding(
-                                  padding: const EdgeInsets.all(40),
+                                  padding: EdgeInsets.all(40),
                                   child: _LoginForm(
                                     emailController: _emailController,
                                     error: _error,
@@ -162,7 +161,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               )
                             else
                               Padding(
-                                padding: const EdgeInsets.all(28),
+                                padding: EdgeInsets.all(28),
                                 child: _LoginForm(
                                   emailController: _emailController,
                                   error: _error,
@@ -207,13 +206,13 @@ class _LoginHero extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.backgroundAlt,
         border: Border(
           right: BorderSide(color: AppColors.border),
         ),
       ),
-      padding: const EdgeInsets.all(48),
+      padding: EdgeInsets.all(48),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -227,14 +226,14 @@ class _LoginHero extends StatelessWidget {
                   color: AppColors.panel,
                   border: Border.all(color: AppColors.border),
                 ),
-                child: const TechIcon(
+                child: TechIcon(
                   TechIconType.clipboard,
                   color: AppColors.accent,
                   size: 30,
                 ),
               ),
-              const SizedBox(width: 16),
-              const Text(
+              SizedBox(width: 16),
+              Text(
                 'AutoCheck',
                 style: TextStyle(
                   color: AppColors.text,
@@ -246,13 +245,13 @@ class _LoginHero extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 96),
+          SizedBox(height: 96),
           Text(
             'Панель автопроверки мобильных тестовых заданий',
             style: Theme.of(context).textTheme.displayLarge,
           ),
-          const SizedBox(height: 28),
-          const Text(
+          SizedBox(height: 28),
+          Text(
             'Создавайте задания, загружайте решения, наблюдайте за чекерами и фиксируйте итоговый вердикт в одном интерфейсе.',
             style: TextStyle(
               color: AppColors.muted,
@@ -260,9 +259,9 @@ class _LoginHero extends StatelessWidget {
               height: 1.65,
             ),
           ),
-          const Spacer(),
-          const TechLabel('[ AUTH NODE: BACKEND / PORT 8080 ]'),
-          const SizedBox(height: 12),
+          Spacer(),
+          TechLabel('[ AUTH NODE: BACKEND / PORT 8080 ]'),
+          SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -270,8 +269,8 @@ class _LoginHero extends StatelessWidget {
                 width: 7,
                 color: AppColors.accent,
               ),
-              const SizedBox(width: 10),
-              const Text(
+              SizedBox(width: 10),
+              Text(
                 'Session broker ready',
                 style: TextStyle(color: AppColors.muted),
               ),
@@ -346,18 +345,18 @@ class _LoginForm extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
       children: [
-        const TechLabel('Вход в систему'),
-        const SizedBox(height: 16),
+        TechLabel('Вход в систему'),
+        SizedBox(height: 16),
         Text(
           'Экспертский dashboard',
           style: Theme.of(context).textTheme.headlineMedium,
         ),
-        const SizedBox(height: 16),
-        const Text(
+        SizedBox(height: 16),
+        Text(
           'Войдите в живой backend или создайте демо-пользователя в PostgreSQL.',
           style: TextStyle(color: AppColors.muted, height: 1.5),
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         Row(
           children: [
             Expanded(
@@ -366,7 +365,7 @@ class _LoginForm extends StatelessWidget {
                 onTap: () => onDemo(_DemoAccount.expert),
               ),
             ),
-            const SizedBox(width: 12),
+            SizedBox(width: 12),
             Expanded(
               child: _DemoCard(
                 account: _DemoAccount.candidate,
@@ -375,26 +374,26 @@ class _LoginForm extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         _TechTextField(
           controller: emailController,
           icon: TechIconType.mail,
           label: 'Email',
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         _TechTextField(
           controller: fullNameController,
           icon: TechIconType.user,
           label: 'ФИО',
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         _TechTextField(
           controller: passwordController,
           icon: TechIconType.lock,
           label: 'Пароль',
           obscureText: true,
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: 18),
         Row(
           children: UserRole.values.map((item) {
             final active = role == item;
@@ -402,7 +401,7 @@ class _LoginForm extends StatelessWidget {
               child: InkWell(
                 onTap: () => onRoleChanged(item),
                 child: Container(
-                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: active ? AppColors.accent : AppColors.panelDeep,
                     border: Border.all(color: active ? AppColors.accent : AppColors.border),
@@ -418,21 +417,21 @@ class _LoginForm extends StatelessWidget {
           }).toList(),
         ),
         if (error != null) ...[
-          const SizedBox(height: 18),
+          SizedBox(height: 18),
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: AppColors.danger.withOpacity(0.1),
               border: Border.all(color: AppColors.danger.withOpacity(0.35)),
             ),
             child: Text(
               error!,
-              style: const TextStyle(color: Color(0xFFFF7A3D)),
+              style: TextStyle(color: Color(0xFFFF7A3D)),
             ),
           ),
         ],
-        const SizedBox(height: 28),
+        SizedBox(height: 28),
         SizedBox(
           width: double.infinity,
           child: TechButton(
@@ -441,7 +440,7 @@ class _LoginForm extends StatelessWidget {
             onPressed: onSubmit,
           ),
         ),
-        const SizedBox(height: 12),
+        SizedBox(height: 12),
         SizedBox(
           width: double.infinity,
           child: TechButton(
@@ -470,7 +469,7 @@ class _DemoCard extends StatelessWidget {
     return InkWell(
       onTap: onTap,
       child: Container(
-        padding: const EdgeInsets.all(18),
+        padding: EdgeInsets.all(18),
         decoration: BoxDecoration(
           color: AppColors.backgroundAlt,
           border: Border.all(color: AppColors.border),
@@ -479,18 +478,18 @@ class _DemoCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-                account.label,
-              style: const TextStyle(
+              account.label,
+              style: TextStyle(
                 color: AppColors.text,
                 fontSize: 15,
                 fontWeight: FontWeight.w800,
               ),
             ),
-            const SizedBox(height: 8),
+            SizedBox(height: 8),
             Text(
-                account.email,
+              account.email,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(color: AppColors.dim),
+              style: TextStyle(color: AppColors.dim),
             ),
           ],
         ),
@@ -518,24 +517,24 @@ class _TechTextField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         TechLabel(label),
-        const SizedBox(height: 10),
+        SizedBox(height: 10),
         TextField(
           controller: controller,
           obscureText: obscureText,
-          style: const TextStyle(color: AppColors.text),
+          style: TextStyle(color: AppColors.text),
           decoration: InputDecoration(
             filled: true,
             fillColor: AppColors.panelDeep,
             prefixIcon: Padding(
-              padding: const EdgeInsets.all(14),
+              padding: EdgeInsets.all(14),
               child: TechIcon(icon, color: AppColors.dim, size: 18),
             ),
-            prefixIconConstraints: const BoxConstraints(minWidth: 48),
-            enabledBorder: const OutlineInputBorder(
+            prefixIconConstraints: BoxConstraints(minWidth: 48),
+            enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
               borderSide: BorderSide(color: AppColors.border),
             ),
-            focusedBorder: const OutlineInputBorder(
+            focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.zero,
               borderSide: BorderSide(color: AppColors.accent),
             ),

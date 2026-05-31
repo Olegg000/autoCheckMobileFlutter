@@ -1,15 +1,14 @@
 import 'dart:async';
-
+import 'package:autocheck_flutter/src/models/submission.dart';
+import 'package:autocheck_flutter/src/services/app_logger.dart';
+import 'package:autocheck_flutter/src/services/backend_repository.dart';
+import 'package:autocheck_flutter/src/services/formatters.dart';
+import 'package:autocheck_flutter/src/theme/app_theme.dart';
+import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
+import 'package:autocheck_flutter/src/widgets/tech_components.dart';
+import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
 
-import '../models/submission.dart';
-import '../services/app_logger.dart';
-import '../services/formatters.dart';
-import '../services/backend_repository.dart';
-import '../theme/app_theme.dart';
-import '../widgets/app_chrome.dart';
-import '../widgets/tech_components.dart';
-import '../widgets/tech_icon.dart';
 
 /// Карточка проверки: score, checker matrix, timeline, AI review и вердикт.
 class SubmissionDetailsScreen extends StatefulWidget {
@@ -140,13 +139,13 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const TechLabel('Backend error'),
-                  const SizedBox(height: 12),
+                   TechLabel('Backend error'),
+                   SizedBox(height: 12),
                   Text(
                     snapshot.error.toString().replaceFirst('Exception: ', ''),
                     style: const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
                   ),
-                  const SizedBox(height: 20),
+                   SizedBox(height: 20),
                   TechButton(
                     icon: TechIconType.refresh,
                     label: 'Повторить',
@@ -196,21 +195,21 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                 onRerun: _rerun,
                 submission: data.submission,
               ),
-              const SizedBox(height: 64),
+               SizedBox(height: 64),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= 980;
                   final left = Column(
                     children: [
                       _ScoreCard(submission: data.submission),
-                      const SizedBox(height: 28),
+                       SizedBox(height: 28),
                       _TimelinePanel(events: data.timeline),
                     ],
                   );
                   final right = Column(
                     children: [
                       _ResultsPanel(results: data.results),
-                      const SizedBox(height: 28),
+                       SizedBox(height: 28),
                       _AiPanel(review: data.review),
                     ],
                   );
@@ -219,7 +218,7 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                     return Column(
                       children: [
                         left,
-                        const SizedBox(height: 28),
+                         SizedBox(height: 28),
                         right,
                       ],
                     );
@@ -229,7 +228,7 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(width: 380, child: left),
-                      const SizedBox(width: 32),
+                       SizedBox(width: 32),
                       Expanded(child: right),
                     ],
                   );
@@ -268,16 +267,16 @@ class _DetailsHeader extends StatelessWidget {
         final title = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const TechLabel('Run card / submission node'),
-            const SizedBox(height: 18),
+             TechLabel('Run card / submission node'),
+             SizedBox(height: 18),
             Text(
               submission.candidateName,
               style: Theme.of(context).textTheme.displayLarge,
             ),
-            const SizedBox(height: 18),
+             SizedBox(height: 18),
             Text(
               '${submission.assignmentTitle} / ${formatDateTime(submission.createdAt)}',
-              style: const TextStyle(color: AppColors.muted, fontSize: 16),
+              style:  TextStyle(color: AppColors.muted, fontSize: 16),
             ),
           ],
         );
@@ -318,7 +317,7 @@ class _DetailsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               title,
-              const SizedBox(height: 26),
+               SizedBox(height: 26),
               buttons,
             ],
           );
@@ -328,7 +327,7 @@ class _DetailsHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: title),
-            const SizedBox(width: 32),
+             SizedBox(width: 32),
             buttons,
           ],
         );
@@ -350,7 +349,7 @@ class _ScoreCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Expanded(child: TechLabel('Итоговый балл')),
+               Expanded(child: TechLabel('Итоговый балл')),
               Container(
                 height: 50,
                 width: 50,
@@ -359,7 +358,7 @@ class _ScoreCard extends StatelessWidget {
                   color: AppColors.accent.withOpacity(0.05),
                   border: Border.all(color: AppColors.accent.withOpacity(0.3)),
                 ),
-                child: const TechIcon(
+                child: TechIcon(
                   TechIconType.shield,
                   color: AppColors.accent,
                   size: 25,
@@ -367,7 +366,7 @@ class _ScoreCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 26),
+           SizedBox(height: 26),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -378,25 +377,25 @@ class _ScoreCard extends StatelessWidget {
                   fontSize: 58,
                 ),
               ),
-              const SizedBox(width: 10),
-              const Padding(
+               SizedBox(width: 10),
+               Padding(
                 padding: EdgeInsets.only(bottom: 9),
                 child: Text('/ 100', style: TextStyle(color: AppColors.dim)),
               ),
             ],
           ),
-          const SizedBox(height: 22),
+           SizedBox(height: 22),
           Text(
             submission.assignmentTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 14),
+           SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: Text(
                   submission.candidateName,
-                  style: const TextStyle(color: AppColors.muted),
+                  style:  TextStyle(color: AppColors.muted),
                 ),
               ),
               StatusBadge(status: submission.status),
@@ -419,10 +418,10 @@ class _TimelinePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const TechLabel('Pipeline events'),
-          const SizedBox(height: 10),
+           TechLabel('Pipeline events'),
+           SizedBox(height: 10),
           Text('Хронология', style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: 24),
+           SizedBox(height: 24),
           ...events.map((event) {
             final color = switch (event.tone) {
               TimelineTone.done => AppColors.accent,
@@ -430,29 +429,29 @@ class _TimelinePanel extends StatelessWidget {
               TimelineTone.muted => AppColors.dim,
             };
             return Padding(
-              padding: const EdgeInsets.only(bottom: 18),
+              padding:  EdgeInsets.only(bottom: 18),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    margin: const EdgeInsets.only(top: 5),
+                    margin:  EdgeInsets.only(top: 5),
                     height: 10,
                     width: 10,
                     color: color,
                   ),
-                  const SizedBox(width: 14),
+                   SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           event.label,
-                          style: const TextStyle(
+                          style:  TextStyle(
                             color: AppColors.text,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 4),
+                         SizedBox(height: 4),
                         Text(
                           formatDateTime(event.time),
                           style: TechText.label,
