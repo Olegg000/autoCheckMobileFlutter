@@ -45,7 +45,7 @@ class _UploadSubmissionScreenState extends State<UploadSubmissionScreen> {
   }
 
   Future<void> _pickZip() async {
-    final result = await FilePicker.platform.pickFiles(
+    final result = await FilePicker.pickFiles(
       allowMultiple: false,
       type: FileType.custom,
       allowedExtensions: const ['zip'],
