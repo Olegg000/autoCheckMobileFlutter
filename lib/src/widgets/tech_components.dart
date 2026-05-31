@@ -37,11 +37,11 @@ class TechPanel extends StatelessWidget {
         width: double.infinity,
         padding: padding,
         decoration: BoxDecoration(
-          color: AppColors.panel.withOpacity(0.88),
+          color: AppColors.panel.withValues(alpha: 0.88),
           border: Border.all(color: AppColors.border),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.42),
+              color: Colors.black.withValues(alpha: 0.42),
               blurRadius: 80,
               offset: const Offset(0, 28),
             ),
@@ -57,17 +57,19 @@ class _PanelCornersPainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final accent = Paint()
-      ..color = AppColors.accent.withOpacity(0.78)
+      ..color = AppColors.accent.withValues(alpha: 0.78)
       ..strokeWidth = 1;
     final muted = Paint()
-      ..color = Colors.white.withOpacity(0.18)
+      ..color = Colors.white.withValues(alpha: 0.18)
       ..strokeWidth = 1;
 
     canvas
       ..drawLine(Offset.zero, const Offset(18, 0), accent)
       ..drawLine(Offset.zero, const Offset(0, 18), accent)
-      ..drawLine(Offset(size.width, size.height), Offset(size.width - 18, size.height), muted)
-      ..drawLine(Offset(size.width, size.height), Offset(size.width, size.height - 18), muted);
+      ..drawLine(Offset(size.width, size.height),
+          Offset(size.width - 18, size.height), muted)
+      ..drawLine(Offset(size.width, size.height),
+          Offset(size.width, size.height - 18), muted);
   }
 
   @override
@@ -108,12 +110,12 @@ class TechButton extends StatelessWidget {
         ),
       TechButtonVariant.secondary => (
           background: AppColors.panel,
-          border: Colors.white.withOpacity(0.1),
+          border: Colors.white.withValues(alpha: 0.1),
           foreground: AppColors.text,
         ),
       TechButtonVariant.danger => (
           background: Colors.transparent,
-          border: AppColors.danger.withOpacity(0.65),
+          border: AppColors.danger.withValues(alpha: 0.65),
           foreground: const Color(0xFFFF7A3D),
         ),
       TechButtonVariant.ghost => (
@@ -197,8 +199,8 @@ class StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
-        border: Border.all(color: color.withOpacity(0.38)),
+        color: color.withValues(alpha: 0.08),
+        border: Border.all(color: color.withValues(alpha: 0.38)),
       ),
       child: Text(
         text.toUpperCase(),

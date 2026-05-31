@@ -17,7 +17,8 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
-  final _emailController = TextEditingController(text: 'expert@autocheck.local');
+  final _emailController =
+      TextEditingController(text: 'expert@autocheck.local');
   final _fullNameController = TextEditingController(text: 'Алексей Морозов');
   final _passwordController = TextEditingController(text: 'secret123');
   final _repository = BackendRepository.instance;
@@ -55,7 +56,8 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       AppLogger.info('LoginScreen', 'Login request started', {'email': email});
       await _repository.login(email, password);
-      AppLogger.debug('LoginScreen', 'Login request completed', {'email': email});
+      AppLogger.debug(
+          'LoginScreen', 'Login request completed', {'email': email});
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
@@ -88,9 +90,12 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      AppLogger.info('LoginScreen', 'Register request started', {'email': email, 'role': _role.name});
-      await _repository.register(email: email, fullName: fullName, password: password, role: _role);
-      AppLogger.debug('LoginScreen', 'Register request completed', {'email': email});
+      AppLogger.info('LoginScreen', 'Register request started',
+          {'email': email, 'role': _role.name});
+      await _repository.register(
+          email: email, fullName: fullName, password: password, role: _role);
+      AppLogger.debug(
+          'LoginScreen', 'Register request completed', {'email': email});
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute<void>(
@@ -147,12 +152,15 @@ class _LoginScreenState extends State<LoginScreen> {
                                         {'email': account.email},
                                       );
                                       _emailController.text = account.email;
-                                      _fullNameController.text = account.fullName;
-                                      _passwordController.text = account.password;
+                                      _fullNameController.text =
+                                          account.fullName;
+                                      _passwordController.text =
+                                          account.password;
                                       setState(() => _role = account.role);
                                     },
                                     onRegister: _register,
-                                    onRoleChanged: (role) => setState(() => _role = role),
+                                    onRoleChanged: (role) =>
+                                        setState(() => _role = role),
                                     onSubmit: _submit,
                                     passwordController: _passwordController,
                                     role: _role,
@@ -179,7 +187,8 @@ class _LoginScreenState extends State<LoginScreen> {
                                     setState(() => _role = account.role);
                                   },
                                   onRegister: _register,
-                                  onRoleChanged: (role) => setState(() => _role = role),
+                                  onRoleChanged: (role) =>
+                                      setState(() => _role = role),
                                   onSubmit: _submit,
                                   passwordController: _passwordController,
                                   role: _role,
@@ -404,12 +413,14 @@ class _LoginForm extends StatelessWidget {
                   padding: EdgeInsets.symmetric(vertical: 12),
                   decoration: BoxDecoration(
                     color: active ? AppColors.accent : AppColors.panelDeep,
-                    border: Border.all(color: active ? AppColors.accent : AppColors.border),
+                    border: Border.all(
+                        color: active ? AppColors.accent : AppColors.border),
                   ),
                   child: Text(
                     item == UserRole.expert ? 'Эксперт' : 'Кандидат',
                     textAlign: TextAlign.center,
-                    style: TechText.label.copyWith(color: active ? AppColors.background : AppColors.muted),
+                    style: TechText.label.copyWith(
+                        color: active ? AppColors.background : AppColors.muted),
                   ),
                 ),
               ),
@@ -422,8 +433,9 @@ class _LoginForm extends StatelessWidget {
             width: double.infinity,
             padding: EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.danger.withOpacity(0.1),
-              border: Border.all(color: AppColors.danger.withOpacity(0.35)),
+              color: AppColors.danger.withValues(alpha: 0.1),
+              border:
+                  Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
             ),
             child: Text(
               error!,

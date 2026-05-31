@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:autocheck_flutter/src/models/submission.dart';
 import 'package:autocheck_flutter/src/services/app_logger.dart';
 import 'package:autocheck_flutter/src/services/backend_repository.dart';
@@ -8,7 +9,6 @@ import 'package:autocheck_flutter/src/widgets/app_chrome.dart';
 import 'package:autocheck_flutter/src/widgets/tech_components.dart';
 import 'package:autocheck_flutter/src/widgets/tech_icon.dart';
 import 'package:flutter/material.dart';
-
 
 /// Карточка проверки: score, checker matrix, timeline, AI review и вердикт.
 class SubmissionDetailsScreen extends StatefulWidget {
@@ -20,7 +20,8 @@ class SubmissionDetailsScreen extends StatefulWidget {
   final String submissionId;
 
   @override
-  State<SubmissionDetailsScreen> createState() => _SubmissionDetailsScreenState();
+  State<SubmissionDetailsScreen> createState() =>
+      _SubmissionDetailsScreenState();
 }
 
 class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
@@ -28,12 +29,13 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
 
   late Future<_DetailsData> _future;
   Timer? _pollTimer;
+  bool _detailsLoading = false;
   bool _rerunLoading = false;
 
   @override
   void initState() {
     super.initState();
-    _future = _load();
+    _future = _trackedLoad();
     _startPolling();
   }
 
@@ -46,9 +48,19 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
   void _startPolling() {
     _pollTimer?.cancel();
     _pollTimer = Timer.periodic(const Duration(seconds: 3), (_) {
-      if (!mounted) return;
-      setState(() => _future = _load());
+      if (!mounted || _detailsLoading) return;
+      setState(() => _future = _trackedLoad());
     });
+  }
+
+  Future<_DetailsData> _trackedLoad() {
+    _detailsLoading = true;
+    final future = _load();
+    future.then(
+      (_) => _detailsLoading = false,
+      onError: (_) => _detailsLoading = false,
+    );
+    return future;
   }
 
   Future<_DetailsData> _load() async {
@@ -56,7 +68,8 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
     final results = await _repository.results(widget.submissionId);
     final review = await _loadAiReview();
     final timeline = await _repository.timeline(submission);
-    if (submission.status != SubmissionStatus.pending && submission.status != SubmissionStatus.running) {
+    if (submission.status != SubmissionStatus.pending &&
+        submission.status != SubmissionStatus.running) {
       _pollTimer?.cancel();
     }
     return _DetailsData(
@@ -71,7 +84,8 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
     try {
       return await _repository.aiReview(widget.submissionId);
     } catch (error) {
-      AppLogger.error('SubmissionDetailsScreen', 'AI review load failed', error);
+      AppLogger.error(
+          'SubmissionDetailsScreen', 'AI review load failed', error);
       return const AiReview(
         summary: 'AI-анализ недоступен: backend не вернул рекомендации.',
         good: [],
@@ -83,11 +97,13 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
   Future<void> _rerun() async {
     setState(() => _rerunLoading = true);
     try {
-      AppLogger.info('SubmissionDetailsScreen', 'Rerun requested', {'submissionId': widget.submissionId});
+      AppLogger.info('SubmissionDetailsScreen', 'Rerun requested',
+          {'submissionId': widget.submissionId});
       await _repository.rerun(widget.submissionId);
-      AppLogger.debug('SubmissionDetailsScreen', 'Rerun completed', {'submissionId': widget.submissionId});
+      AppLogger.debug('SubmissionDetailsScreen', 'Rerun completed',
+          {'submissionId': widget.submissionId});
       _startPolling();
-      setState(() => _future = _load());
+      setState(() => _future = _trackedLoad());
     } catch (error) {
       AppLogger.error('SubmissionDetailsScreen', 'Rerun failed', error);
     } finally {
@@ -112,15 +128,20 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
       AppLogger.debug(
         'SubmissionDetailsScreen',
         'Verdict update completed',
-        {'submissionId': widget.submissionId, 'verdict': verdict.name, 'comment': comment},
+        {
+          'submissionId': widget.submissionId,
+          'verdict': verdict.name,
+          'comment': comment
+        },
       );
-      setState(() => _future = _load());
+      setState(() => _future = _trackedLoad());
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Вердикт сохранен')),
       );
     } catch (error) {
-      AppLogger.error('SubmissionDetailsScreen', 'Verdict update failed', error);
+      AppLogger.error(
+          'SubmissionDetailsScreen', 'Verdict update failed', error);
     }
   }
 
@@ -139,17 +160,18 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   TechLabel('Backend error'),
-                   SizedBox(height: 12),
+                  TechLabel('Backend error'),
+                  SizedBox(height: 12),
                   Text(
                     snapshot.error.toString().replaceFirst('Exception: ', ''),
-                    style: const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
+                    style:
+                        const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
                   ),
-                   SizedBox(height: 20),
+                  SizedBox(height: 20),
                   TechButton(
                     icon: TechIconType.refresh,
                     label: 'Повторить',
-                    onPressed: () => setState(() => _future = _load()),
+                    onPressed: () => setState(() => _future = _trackedLoad()),
                     variant: TechButtonVariant.secondary,
                   ),
                 ],
@@ -195,21 +217,21 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                 onRerun: _rerun,
                 submission: data.submission,
               ),
-               SizedBox(height: 64),
+              SizedBox(height: 64),
               LayoutBuilder(
                 builder: (context, constraints) {
                   final wide = constraints.maxWidth >= 980;
                   final left = Column(
                     children: [
                       _ScoreCard(submission: data.submission),
-                       SizedBox(height: 28),
+                      SizedBox(height: 28),
                       _TimelinePanel(events: data.timeline),
                     ],
                   );
                   final right = Column(
                     children: [
                       _ResultsPanel(results: data.results),
-                       SizedBox(height: 28),
+                      SizedBox(height: 28),
                       _AiPanel(review: data.review),
                     ],
                   );
@@ -218,7 +240,7 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                     return Column(
                       children: [
                         left,
-                         SizedBox(height: 28),
+                        SizedBox(height: 28),
                         right,
                       ],
                     );
@@ -228,7 +250,7 @@ class _SubmissionDetailsScreenState extends State<SubmissionDetailsScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       SizedBox(width: 380, child: left),
-                       SizedBox(width: 32),
+                      SizedBox(width: 32),
                       Expanded(child: right),
                     ],
                   );
@@ -267,16 +289,16 @@ class _DetailsHeader extends StatelessWidget {
         final title = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-             TechLabel('Run card / submission node'),
-             SizedBox(height: 18),
+            TechLabel('Run card / submission node'),
+            SizedBox(height: 18),
             Text(
               submission.candidateName,
               style: Theme.of(context).textTheme.displayLarge,
             ),
-             SizedBox(height: 18),
+            SizedBox(height: 18),
             Text(
               '${submission.assignmentTitle} / ${formatDateTime(submission.createdAt)}',
-              style:  TextStyle(color: AppColors.muted, fontSize: 16),
+              style: TextStyle(color: AppColors.muted, fontSize: 16),
             ),
           ],
         );
@@ -317,7 +339,7 @@ class _DetailsHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               title,
-               SizedBox(height: 26),
+              SizedBox(height: 26),
               buttons,
             ],
           );
@@ -327,7 +349,7 @@ class _DetailsHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(child: title),
-             SizedBox(width: 32),
+            SizedBox(width: 32),
             buttons,
           ],
         );
@@ -349,14 +371,15 @@ class _ScoreCard extends StatelessWidget {
         children: [
           Row(
             children: [
-               Expanded(child: TechLabel('Итоговый балл')),
+              Expanded(child: TechLabel('Итоговый балл')),
               Container(
                 height: 50,
                 width: 50,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: AppColors.accent.withOpacity(0.05),
-                  border: Border.all(color: AppColors.accent.withOpacity(0.3)),
+                  color: AppColors.accent.withValues(alpha: 0.05),
+                  border: Border.all(
+                      color: AppColors.accent.withValues(alpha: 0.3)),
                 ),
                 child: TechIcon(
                   TechIconType.shield,
@@ -366,7 +389,7 @@ class _ScoreCard extends StatelessWidget {
               ),
             ],
           ),
-           SizedBox(height: 26),
+          SizedBox(height: 26),
           Row(
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
@@ -377,25 +400,25 @@ class _ScoreCard extends StatelessWidget {
                   fontSize: 58,
                 ),
               ),
-               SizedBox(width: 10),
-               Padding(
+              SizedBox(width: 10),
+              Padding(
                 padding: EdgeInsets.only(bottom: 9),
                 child: Text('/ 100', style: TextStyle(color: AppColors.dim)),
               ),
             ],
           ),
-           SizedBox(height: 22),
+          SizedBox(height: 22),
           Text(
             submission.assignmentTitle,
             style: Theme.of(context).textTheme.titleLarge,
           ),
-           SizedBox(height: 14),
+          SizedBox(height: 14),
           Row(
             children: [
               Expanded(
                 child: Text(
                   submission.candidateName,
-                  style:  TextStyle(color: AppColors.muted),
+                  style: TextStyle(color: AppColors.muted),
                 ),
               ),
               StatusBadge(status: submission.status),
@@ -418,10 +441,10 @@ class _TimelinePanel extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           TechLabel('Pipeline events'),
-           SizedBox(height: 10),
+          TechLabel('Pipeline events'),
+          SizedBox(height: 10),
           Text('Хронология', style: Theme.of(context).textTheme.titleLarge),
-           SizedBox(height: 24),
+          SizedBox(height: 24),
           ...events.map((event) {
             final color = switch (event.tone) {
               TimelineTone.done => AppColors.accent,
@@ -429,29 +452,29 @@ class _TimelinePanel extends StatelessWidget {
               TimelineTone.muted => AppColors.dim,
             };
             return Padding(
-              padding:  EdgeInsets.only(bottom: 18),
+              padding: EdgeInsets.only(bottom: 18),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Container(
-                    margin:  EdgeInsets.only(top: 5),
+                    margin: EdgeInsets.only(top: 5),
                     height: 10,
                     width: 10,
                     color: color,
                   ),
-                   SizedBox(width: 14),
+                  SizedBox(width: 14),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           event.label,
-                          style:  TextStyle(
+                          style: TextStyle(
                             color: AppColors.text,
                             fontWeight: FontWeight.w700,
                           ),
                         ),
-                         SizedBox(height: 4),
+                        SizedBox(height: 4),
                         Text(
                           formatDateTime(event.time),
                           style: TechText.label,
@@ -482,7 +505,8 @@ class _ResultsPanel extends StatelessWidget {
         children: [
           const TechLabel('Checker matrix'),
           const SizedBox(height: 10),
-          Text('Детализация проверок', style: Theme.of(context).textTheme.titleLarge),
+          Text('Детализация проверок',
+              style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 26),
           ...results.map((result) => _ResultCard(result: result)),
         ],
@@ -529,7 +553,9 @@ class _ResultCardState extends State<_ResultCard> {
                       border: Border.all(color: AppColors.border),
                     ),
                     child: TechIcon(
-                      _open ? TechIconType.chevronDown : TechIconType.chevronRight,
+                      _open
+                          ? TechIconType.chevronDown
+                          : TechIconType.chevronRight,
                       color: AppColors.accent,
                       size: 18,
                     ),
@@ -626,7 +652,8 @@ class _AiPanel extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const TechLabel('AI inspection'),
-                  Text('AI-анализ', style: Theme.of(context).textTheme.titleLarge),
+                  Text('AI-анализ',
+                      style: Theme.of(context).textTheme.titleLarge),
                 ],
               ),
             ],
@@ -707,7 +734,9 @@ class _VerdictDialogState extends State<_VerdictDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final title = widget.verdict == Verdict.accepted ? 'Принять кандидата' : 'Отклонить кандидата';
+    final title = widget.verdict == Verdict.accepted
+        ? 'Принять кандидата'
+        : 'Отклонить кандидата';
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.all(22),
@@ -730,7 +759,8 @@ class _VerdictDialogState extends State<_VerdictDialog> {
                       decoration: BoxDecoration(
                         border: Border.all(color: AppColors.border),
                       ),
-                      child: const TechIcon(TechIconType.close, color: AppColors.muted),
+                      child: const TechIcon(TechIconType.close,
+                          color: AppColors.muted),
                     ),
                   ),
                 ],
@@ -767,7 +797,8 @@ class _VerdictDialogState extends State<_VerdictDialog> {
                   const SizedBox(width: 12),
                   TechButton(
                     label: 'Сохранить',
-                    onPressed: () => Navigator.of(context).pop(_controller.text),
+                    onPressed: () =>
+                        Navigator.of(context).pop(_controller.text),
                   ),
                 ],
               ),
@@ -798,15 +829,19 @@ class _ReportDialog extends StatelessWidget {
             children: [
               Row(
                 children: [
-                  Expanded(child: Text('JSON-отчет', style: Theme.of(context).textTheme.titleLarge)),
+                  Expanded(
+                      child: Text('JSON-отчет',
+                          style: Theme.of(context).textTheme.titleLarge)),
                   InkWell(
                     onTap: () => Navigator.of(context).pop(),
                     child: Container(
                       height: 38,
                       width: 38,
                       alignment: Alignment.center,
-                      decoration: BoxDecoration(border: Border.all(color: AppColors.border)),
-                      child: const TechIcon(TechIconType.close, color: AppColors.muted),
+                      decoration: BoxDecoration(
+                          border: Border.all(color: AppColors.border)),
+                      child: const TechIcon(TechIconType.close,
+                          color: AppColors.muted),
                     ),
                   ),
                 ],
@@ -817,7 +852,10 @@ class _ReportDialog extends StatelessWidget {
                 child: SingleChildScrollView(
                   child: Text(
                     report,
-                    style: const TextStyle(color: AppColors.muted, fontFamily: 'monospace', height: 1.45),
+                    style: const TextStyle(
+                        color: AppColors.muted,
+                        fontFamily: 'monospace',
+                        height: 1.45),
                   ),
                 ),
               ),

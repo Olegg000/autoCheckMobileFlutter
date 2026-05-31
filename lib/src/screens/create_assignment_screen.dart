@@ -16,16 +16,23 @@ class CreateAssignmentScreen extends StatefulWidget {
 
 class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
   final _repository = BackendRepository.instance;
-  final _title = TextEditingController(text: 'Mobile Clean Architecture Challenge');
-  final _description = TextEditingController(text: 'Проверка мобильного проекта на архитектуру, сборку, тесты и документацию.');
+  final _title =
+      TextEditingController(text: 'Mobile Clean Architecture Challenge');
+  final _description = TextEditingController(
+      text:
+          'Проверка мобильного проекта на архитектуру, сборку, тесты и документацию.');
   final _technologies = TextEditingController(text: 'Flutter, Kotlin, Android');
-  final _instructions = TextEditingController(text: 'Загрузите ZIP проекта или ссылку на публичный Git-репозиторий. README и тесты обязательны.');
+  final _instructions = TextEditingController(
+      text:
+          'Загрузите ZIP проекта или ссылку на публичный Git-репозиторий. README и тесты обязательны.');
 
   var _checkers = [...defaultCheckerConfig];
   var _loading = false;
   String? _error;
 
-  int get _totalWeight => _checkers.where((item) => item.enabled).fold(0, (sum, item) => sum + item.weight);
+  int get _totalWeight => _checkers
+      .where((item) => item.enabled)
+      .fold(0, (sum, item) => sum + item.weight);
 
   @override
   void dispose() {
@@ -38,7 +45,9 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
 
   void _updateChecker(CheckerName checker, CheckerConfig next) {
     setState(() {
-      _checkers = _checkers.map((item) => item.checker == checker ? next : item).toList();
+      _checkers = _checkers
+          .map((item) => item.checker == checker ? next : item)
+          .toList();
     });
   }
 
@@ -65,14 +74,20 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         description: _description.text.trim(),
         instructionsMarkdown: _instructions.text.trim(),
         status: status,
-        technologies: _technologies.text.split(',').map((item) => item.trim()).where((item) => item.isNotEmpty).toList(),
+        technologies: _technologies.text
+            .split(',')
+            .map((item) => item.trim())
+            .where((item) => item.isNotEmpty)
+            .toList(),
         title: _title.text.trim(),
       );
-      AppLogger.debug('CreateAssignmentScreen', 'Assignment create completed', {'status': status.name});
+      AppLogger.debug('CreateAssignmentScreen', 'Assignment create completed',
+          {'status': status.name});
       if (!mounted) return;
       Navigator.of(context).pop(true);
     } catch (error) {
-      AppLogger.error('CreateAssignmentScreen', 'Assignment create failed', error);
+      AppLogger.error(
+          'CreateAssignmentScreen', 'Assignment create failed', error);
       setState(() => _error = error.toString().replaceFirst('Exception: ', ''));
     } finally {
       if (mounted) setState(() => _loading = false);
@@ -89,9 +104,12 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
         children: [
           TechLabel('Sprint-3 / assignment control'),
           SizedBox(height: 18),
-          Text('Создание тестового задания', style: Theme.of(context).textTheme.displayLarge),
+          Text('Создание тестового задания',
+              style: Theme.of(context).textTheme.displayLarge),
           SizedBox(height: 20),
-          Text('Настройте чекеры и веса. Backend принимает задание только при сумме 100%.', style: TextStyle(color: AppColors.muted)),
+          Text(
+              'Настройте чекеры и веса. Backend принимает задание только при сумме 100%.',
+              style: TextStyle(color: AppColors.muted)),
           SizedBox(height: 44),
           TechPanel(
             child: Column(
@@ -103,7 +121,10 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                 SizedBox(height: 18),
                 _Field(label: 'Описание', controller: _description, lines: 4),
                 SizedBox(height: 18),
-                _Field(label: 'Инструкция кандидату', controller: _instructions, lines: 5),
+                _Field(
+                    label: 'Инструкция кандидату',
+                    controller: _instructions,
+                    lines: 5),
               ],
             ),
           ),
@@ -116,8 +137,15 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                   children: [
                     TechIcon(TechIconType.activity, color: AppColors.accent),
                     SizedBox(width: 12),
-                    Expanded(child: Text('Чекеры и веса', style: Theme.of(context).textTheme.titleLarge)),
-                    Text('$_totalWeight%', style: TechText.monoValue.copyWith(fontSize: 24, color: _totalWeight == 100 ? AppColors.accent : AppColors.danger)),
+                    Expanded(
+                        child: Text('Чекеры и веса',
+                            style: Theme.of(context).textTheme.titleLarge)),
+                    Text('$_totalWeight%',
+                        style: TechText.monoValue.copyWith(
+                            fontSize: 24,
+                            color: _totalWeight == 100
+                                ? AppColors.accent
+                                : AppColors.danger)),
                   ],
                 ),
                 SizedBox(height: 22),
@@ -135,9 +163,20 @@ class _CreateAssignmentScreenState extends State<CreateAssignmentScreen> {
                   runSpacing: 12,
                   alignment: WrapAlignment.end,
                   children: [
-                    TechButton(label: 'Отмена', variant: TechButtonVariant.ghost, onPressed: () => Navigator.of(context).pop(false)),
-                    TechButton(label: 'Черновик', loading: _loading, variant: TechButtonVariant.secondary, onPressed: () => _submit(AssignmentStatus.draft)),
-                    TechButton(icon: TechIconType.check, label: 'Опубликовать', loading: _loading, onPressed: () => _submit(AssignmentStatus.published)),
+                    TechButton(
+                        label: 'Отмена',
+                        variant: TechButtonVariant.ghost,
+                        onPressed: () => Navigator.of(context).pop(false)),
+                    TechButton(
+                        label: 'Черновик',
+                        loading: _loading,
+                        variant: TechButtonVariant.secondary,
+                        onPressed: () => _submit(AssignmentStatus.draft)),
+                    TechButton(
+                        icon: TechIconType.check,
+                        label: 'Опубликовать',
+                        loading: _loading,
+                        onPressed: () => _submit(AssignmentStatus.published)),
                   ],
                 ),
               ],
@@ -160,7 +199,9 @@ class _CheckerRow extends StatelessWidget {
     return Container(
       margin: EdgeInsets.only(bottom: 12),
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.panelDeep, border: Border.all(color: AppColors.border)),
+      decoration: BoxDecoration(
+          color: AppColors.panelDeep,
+          border: Border.all(color: AppColors.border)),
       child: Column(
         children: [
           Row(
@@ -168,10 +209,15 @@ class _CheckerRow extends StatelessWidget {
               Checkbox(
                 value: config.enabled,
                 activeColor: AppColors.accent,
-                onChanged: (value) => onChanged(config.copyWith(enabled: value ?? false)),
+                onChanged: (value) =>
+                    onChanged(config.copyWith(enabled: value ?? false)),
               ),
-              Expanded(child: Text(checkerLabel(config.checker), style: TextStyle(color: AppColors.text, fontWeight: FontWeight.w800))),
-              Text('${config.weight}%', style: TechText.label.copyWith(color: AppColors.accent)),
+              Expanded(
+                  child: Text(checkerLabel(config.checker),
+                      style: TextStyle(
+                          color: AppColors.text, fontWeight: FontWeight.w800))),
+              Text('${config.weight}%',
+                  style: TechText.label.copyWith(color: AppColors.accent)),
             ],
           ),
           Slider(
@@ -181,7 +227,9 @@ class _CheckerRow extends StatelessWidget {
             divisions: 100,
             activeColor: AppColors.accent,
             inactiveColor: AppColors.border,
-            onChanged: config.enabled ? (value) => onChanged(config.copyWith(weight: value.round())) : null,
+            onChanged: config.enabled
+                ? (value) => onChanged(config.copyWith(weight: value.round()))
+                : null,
           ),
         ],
       ),
@@ -210,8 +258,12 @@ class _Field extends StatelessWidget {
           decoration: const InputDecoration(
             filled: true,
             fillColor: AppColors.panelDeep,
-            enabledBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.border)),
-            focusedBorder: OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: BorderSide(color: AppColors.accent)),
+            enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.border)),
+            focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.zero,
+                borderSide: BorderSide(color: AppColors.accent)),
           ),
         ),
       ],
@@ -229,7 +281,10 @@ class _ErrorPanel extends StatelessWidget {
     return Container(
       width: double.infinity,
       padding: EdgeInsets.all(16),
-      decoration: BoxDecoration(color: AppColors.danger.withOpacity(0.1), border: Border.all(color: AppColors.danger.withOpacity(0.35))),
+      decoration: BoxDecoration(
+        color: AppColors.danger.withValues(alpha: 0.1),
+        border: Border.all(color: AppColors.danger.withValues(alpha: 0.35)),
+      ),
       child: Text(text, style: TextStyle(color: Color(0xFFFF7A3D))),
     );
   }

@@ -40,13 +40,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   Future<_DashboardData> _load() async {
-    final stats = await _repository.stats();
     final submissions = await _repository.submissions();
+    final stats = await _repository.stats(loadedSubmissions: submissions);
     return _DashboardData(stats: stats, submissions: submissions);
   }
 
   void _openSubmission(Submission submission) {
-    AppLogger.info('DashboardScreen', 'Submission row opened', {'submissionId': submission.id});
+    AppLogger.info('DashboardScreen', 'Submission row opened',
+        {'submissionId': submission.id});
     Navigator.of(context).push(
       MaterialPageRoute<void>(
         builder: (_) => SubmissionDetailsScreen(submissionId: submission.id),
@@ -91,6 +92,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: FutureBuilder<_DashboardData>(
         future: _future,
         builder: (context, snapshot) {
+          if (snapshot.hasError) {
+            return TechPanel(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  TechLabel('Dashboard error'),
+                  const SizedBox(height: 12),
+                  Text(
+                    snapshot.error.toString().replaceFirst('Exception: ', ''),
+                    style:
+                        const TextStyle(color: Color(0xFFFF7A3D), height: 1.45),
+                  ),
+                  const SizedBox(height: 20),
+                  TechButton(
+                    icon: TechIconType.refresh,
+                    label: 'Повторить',
+                    onPressed: () => setState(() => _future = _load()),
+                    variant: TechButtonVariant.secondary,
+                  ),
+                ],
+              ),
+            );
+          }
+
           if (!snapshot.hasData) {
             return _LoadingPanel(label: 'Загружаем dashboard');
           }
@@ -99,7 +124,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
           final submissions = data.submissions.where((item) {
             final query = _search.toLowerCase();
             if (query.isEmpty) return true;
-            return item.candidateName.toLowerCase().contains(query) || item.candidateEmail.toLowerCase().contains(query) || item.assignmentTitle.toLowerCase().contains(query);
+            return item.candidateName.toLowerCase().contains(query) ||
+                item.candidateEmail.toLowerCase().contains(query) ||
+                item.assignmentTitle.toLowerCase().contains(query);
           }).toList();
 
           return Column(
@@ -402,7 +429,8 @@ class _SubmissionRow extends StatelessWidget {
                   ),
                 ),
                 SizedBox(width: 12),
-                TechIcon(TechIconType.chevronRight, color: AppColors.muted, size: 18),
+                TechIcon(TechIconType.chevronRight,
+                    color: AppColors.muted, size: 18),
               ],
             );
 

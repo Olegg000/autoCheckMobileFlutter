@@ -1,6 +1,9 @@
+import 'dart:async';
 import 'dart:convert';
-// import 'package:file_picker/file_picker.dart';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:http/http.dart' as http;
+
 import '../models/api_contract.dart';
 import '../models/submission.dart';
 import 'app_logger.dart';
@@ -22,10 +25,16 @@ class BackendRepository {
 
   static final instance = BackendRepository._();
 
-  static const _baseUrl = String.fromEnvironment(
+  static const _configuredBaseUrl = String.fromEnvironment(
     'AUTOCHECK_API_URL',
-    defaultValue: 'https://hrmanager.vrsalex.ru/api/v1',
+    defaultValue: 'http://10.0.2.2:8080/api/v1',
   );
+  static const _requestTimeout = Duration(seconds: 15);
+  static const _uploadTimeout = Duration(minutes: 2);
+
+  static String get _baseUrl => _configuredBaseUrl.endsWith('/')
+      ? _configuredBaseUrl.substring(0, _configuredBaseUrl.length - 1)
+      : _configuredBaseUrl;
 
   String? _token;
 
@@ -53,7 +62,8 @@ class BackendRepository {
     required String password,
     required UserRole role,
   }) async {
-    AppLogger.info('BackendRepository', 'POST /auth/register', {'email': email, 'role': role.name});
+    AppLogger.info('BackendRepository', 'POST /auth/register',
+        {'email': email, 'role': role.name});
     final data = _asMap(await _request('POST', '/auth/register', body: {
       'email': email,
       'password': password,
@@ -63,12 +73,14 @@ class BackendRepository {
     _token = data['token']?.toString();
   }
 
-  Future<DashboardStats> stats() async {
+  Future<DashboardStats> stats({List<Submission>? loadedSubmissions}) async {
     AppLogger.info('BackendRepository', 'GET /reports/stats');
     final data = _asMap(await _request('GET', '/reports/stats'));
-    final submissions = await this.submissions();
+    final submissions = loadedSubmissions ?? await this.submissions();
     final awaiting = submissions
-        .where((item) => item.status == SubmissionStatus.pending || item.status == SubmissionStatus.running)
+        .where((item) =>
+            item.status == SubmissionStatus.pending ||
+            item.status == SubmissionStatus.running)
         .length;
     return DashboardStats(
       averageScore: _num(data['averageScore']).round(),
@@ -102,7 +114,9 @@ class BackendRepository {
             return TopCandidate(
               bestScore: _num(map['bestScore']),
               fullName: map['fullName']?.toString() ?? 'Кандидат',
-              id: map['candidateId']?.toString() ?? map['fullName']?.toString() ?? 'candidate',
+              id: map['candidateId']?.toString() ??
+                  map['fullName']?.toString() ??
+                  'candidate',
             );
           }).toList()
         : const <TopCandidate>[];
@@ -128,7 +142,8 @@ class BackendRepository {
     required List<String> technologies,
     required String title,
   }) async {
-    AppLogger.info('BackendRepository', 'POST /assignments', {'title': title, 'status': status.name});
+    AppLogger.info('BackendRepository', 'POST /assignments',
+        {'title': title, 'status': status.name});
     final weights = <String, int>{
       for (final item in checkerConfig)
         if (item.enabled) checkerRawName(item.checker): item.weight,
@@ -146,16 +161,20 @@ class BackendRepository {
   }
 
   Future<List<Submission>> submissions({String? assignmentId}) async {
-    AppLogger.info('BackendRepository', 'GET /submissions', {'assignmentId': assignmentId});
+    AppLogger.info('BackendRepository', 'GET /submissions',
+        {'assignmentId': assignmentId});
     final path = assignmentId == null || assignmentId.isEmpty
         ? '/submissions'
         : '/submissions?assignmentId=${Uri.encodeQueryComponent(assignmentId)}';
     final data = _asMapList(await _request('GET', path));
-    return data.map((item) => ApiSubmissionDto.fromJson(item).toDomain()).toList();
+    return data
+        .map((item) => ApiSubmissionDto.fromJson(item).toDomain())
+        .toList();
   }
 
   Future<Submission> submissionById(String id) async {
-    AppLogger.info('BackendRepository', 'GET /submissions/{id}', {'submissionId': id});
+    AppLogger.info(
+        'BackendRepository', 'GET /submissions/{id}', {'submissionId': id});
     final data = _asMap(await _request('GET', '/submissions/$id'));
     return ApiSubmissionDto.fromJson(data).toDomain();
   }
@@ -164,7 +183,7 @@ class BackendRepository {
     required String assignmentId,
     required String candidateEmail,
     required String candidateFullName,
-    // PlatformFile? file,
+    PlatformFile? file,
     String? gitUrl,
   }) async {
     AppLogger.info('BackendRepository', 'POST /submissions', {
@@ -172,39 +191,64 @@ class BackendRepository {
       'candidateEmail': candidateEmail,
       'source': gitUrl == null ? 'zip' : 'git',
     });
-    final request = http.MultipartRequest('POST', Uri.parse('$_baseUrl/submissions'))
-      ..headers.addAll(_authHeaders)
-      ..fields['assignmentId'] = assignmentId
-      ..fields['candidateEmail'] = candidateEmail
-      ..fields['candidateFullName'] = candidateFullName;
+    final request =
+        http.MultipartRequest('POST', Uri.parse('$_baseUrl/submissions'))
+          ..headers.addAll(_authHeaders)
+          ..fields['assignmentId'] = assignmentId
+          ..fields['candidateEmail'] = candidateEmail
+          ..fields['candidateFullName'] = candidateFullName;
 
     if (gitUrl != null && gitUrl.trim().isNotEmpty) {
       request.fields['gitUrl'] = gitUrl.trim();
     }
 
-    // if (file != null) {
-    //   final bytes = file.bytes;
-    //   if (bytes == null) {
-    //     throw Exception('Файл не загружен в память. Выберите ZIP ещё раз.');
-    //   }
-    //   request.files.add(http.MultipartFile.fromBytes('file', bytes, filename: file.name));
-    // }
-    //
-    final streamed = await request.send();
-    final response = await http.Response.fromStream(streamed);
-    final data = _asMap(_unwrap(response.statusCode, response.body));
-    return ApiSubmissionDto.fromJson(data).toDomain();
+    if (file != null) {
+      final bytes = file.bytes;
+      if (bytes != null) {
+        request.files.add(
+            http.MultipartFile.fromBytes('file', bytes, filename: file.name));
+      } else if (file.path != null) {
+        request.files.add(await http.MultipartFile.fromPath('file', file.path!,
+            filename: file.name));
+      } else {
+        throw Exception('Файл не загружен. Выберите ZIP ещё раз.');
+      }
+    }
+
+    try {
+      final streamed = await request.send().timeout(_uploadTimeout);
+      final response =
+          await http.Response.fromStream(streamed).timeout(_requestTimeout);
+      AppLogger.debug('BackendRepository', 'POST /submissions completed',
+          {'statusCode': response.statusCode});
+      final data = _asMap(_unwrap(response.statusCode, response.body));
+      return ApiSubmissionDto.fromJson(data).toDomain();
+    } on TimeoutException {
+      AppLogger.error('BackendRepository', 'POST /submissions timeout',
+          {'timeoutSec': _uploadTimeout.inSeconds});
+      throw Exception(
+          'Backend не ответил при загрузке решения. Проверьте адрес API и Docker backend.');
+    } catch (error) {
+      AppLogger.error('BackendRepository', 'POST /submissions failed', error);
+      rethrow;
+    }
   }
 
   Future<List<CheckResult>> results(String submissionId) async {
-    AppLogger.info('BackendRepository', 'GET /submissions/{id}/results', {'submissionId': submissionId});
-    final data = _asMapList(await _request('GET', '/submissions/$submissionId/results'));
-    return data.map((item) => ApiCheckResultDto.fromJson(item).toDomain()).toList();
+    AppLogger.info('BackendRepository', 'GET /submissions/{id}/results',
+        {'submissionId': submissionId});
+    final data =
+        _asMapList(await _request('GET', '/submissions/$submissionId/results'));
+    return data
+        .map((item) => ApiCheckResultDto.fromJson(item).toDomain())
+        .toList();
   }
 
   Future<AiReview> aiReview(String submissionId) async {
-    AppLogger.info('BackendRepository', 'GET /submissions/{id}/ai-review', {'submissionId': submissionId});
-    final data = _asMap(await _request('GET', '/submissions/$submissionId/ai-review'));
+    AppLogger.info('BackendRepository', 'GET /submissions/{id}/ai-review',
+        {'submissionId': submissionId});
+    final data =
+        _asMap(await _request('GET', '/submissions/$submissionId/ai-review'));
     return ApiAiReviewDto(
       available: data['available'] == true,
       recommendations: _stringList(data['recommendations']),
@@ -215,14 +259,25 @@ class BackendRepository {
   }
 
   Future<List<TimelineEvent>> timeline(Submission submission) async {
-    AppLogger.info('BackendRepository', 'Client timeline derived from Submission', {'submissionId': submission.id});
+    AppLogger.info(
+        'BackendRepository',
+        'Client timeline derived from Submission',
+        {'submissionId': submission.id});
     return [
-      TimelineEvent(label: 'Решение загружено', time: submission.createdAt, tone: TimelineTone.done),
-      TimelineEvent(label: 'Задача поставлена в очередь', time: submission.createdAt, tone: TimelineTone.done),
+      TimelineEvent(
+          label: 'Решение загружено',
+          time: submission.createdAt,
+          tone: TimelineTone.done),
+      TimelineEvent(
+          label: 'Задача поставлена в очередь',
+          time: submission.createdAt,
+          tone: TimelineTone.done),
       TimelineEvent(
         label: 'Запущены чекеры',
         time: submission.createdAt.add(const Duration(minutes: 2)),
-        tone: submission.status == SubmissionStatus.pending ? TimelineTone.active : TimelineTone.done,
+        tone: submission.status == SubmissionStatus.pending
+            ? TimelineTone.active
+            : TimelineTone.done,
       ),
       TimelineEvent(
         label: 'Результаты рассчитаны',
@@ -232,23 +287,28 @@ class BackendRepository {
       TimelineEvent(
         label: 'Вердикт эксперта',
         time: submission.completedAt ?? submission.createdAt,
-        tone: submission.verdict == Verdict.none ? TimelineTone.muted : TimelineTone.done,
+        tone: submission.verdict == Verdict.none
+            ? TimelineTone.muted
+            : TimelineTone.done,
       ),
     ];
   }
 
   Future<Submission> rerun(String id) async {
-    AppLogger.info('BackendRepository', 'POST /submissions/{id}/rerun', {'submissionId': id});
+    AppLogger.info('BackendRepository', 'POST /submissions/{id}/rerun',
+        {'submissionId': id});
     final data = _asMap(await _request('POST', '/submissions/$id/rerun'));
     return ApiSubmissionDto.fromJson(data).toDomain();
   }
 
-  Future<Submission> updateVerdict(String id, Verdict verdict, String comment) async {
+  Future<Submission> updateVerdict(
+      String id, Verdict verdict, String comment) async {
     AppLogger.info('BackendRepository', 'PUT /submissions/{id}/verdict', {
       'submissionId': id,
       'verdict': verdict.name,
     });
-    final data = _asMap(await _request('PUT', '/submissions/$id/verdict', body: {
+    final data =
+        _asMap(await _request('PUT', '/submissions/$id/verdict', body: {
       'verdict': verdict == Verdict.accepted ? 'ACCEPTED' : 'REJECTED',
       'comment': comment,
     }));
@@ -256,32 +316,54 @@ class BackendRepository {
   }
 
   Future<String> report(String id) async {
-    AppLogger.info('BackendRepository', 'GET /submissions/{id}/report', {'submissionId': id});
+    AppLogger.info('BackendRepository', 'GET /submissions/{id}/report',
+        {'submissionId': id});
     final data = await _request('GET', '/submissions/$id/report');
     const encoder = JsonEncoder.withIndent('  ');
     return encoder.convert(data);
   }
 
-  Future<Object?> _request(String method, String path, {Map<String, Object?>? body}) async {
+  Future<Object?> _request(String method, String path,
+      {Map<String, Object?>? body}) async {
     final uri = Uri.parse('$_baseUrl$path');
-    final response = switch (method) {
-      'GET' => await http.get(uri, headers: _jsonHeaders),
-      'POST' => await http.post(uri, headers: _jsonHeaders, body: body == null ? null : jsonEncode(body)),
-      'PUT' => await http.put(uri, headers: _jsonHeaders, body: body == null ? null : jsonEncode(body)),
-      _ => throw UnsupportedError('Unsupported method $method'),
-    };
-    return _unwrap(response.statusCode, response.body);
+    try {
+      final pending = switch (method) {
+        'GET' => http.get(uri, headers: _jsonHeaders),
+        'POST' => http.post(uri,
+            headers: _jsonHeaders,
+            body: body == null ? null : jsonEncode(body)),
+        'PUT' => http.put(uri,
+            headers: _jsonHeaders,
+            body: body == null ? null : jsonEncode(body)),
+        _ => throw UnsupportedError('Unsupported method $method'),
+      };
+      final response = await pending.timeout(_requestTimeout);
+
+      AppLogger.debug('BackendRepository', '$method $path completed',
+          {'statusCode': response.statusCode});
+      return _unwrap(response.statusCode, response.body);
+    } on TimeoutException {
+      AppLogger.error('BackendRepository', '$method $path timeout',
+          {'timeoutSec': _requestTimeout.inSeconds});
+      throw Exception(
+          'Backend не ответил за ${_requestTimeout.inSeconds} секунд. Проверьте AUTOCHECK_API_URL.');
+    } catch (error) {
+      AppLogger.error('BackendRepository', '$method $path failed', error);
+      rethrow;
+    }
   }
 
   Object? _unwrap(int statusCode, String body) {
     final decoded = body.isEmpty ? null : jsonDecode(body);
-    final envelope = decoded is Map && (decoded.containsKey('data') || decoded.containsKey('error'));
+    final envelope = decoded is Map &&
+        (decoded.containsKey('data') || decoded.containsKey('error'));
     final decodedMap = envelope ? _asMap(decoded) : null;
     final error = decodedMap?['error'];
 
     if (statusCode >= 400 || error != null) {
       if (error is Map) {
-        throw Exception(_asMap(error)['message']?.toString() ?? 'Backend request failed');
+        throw Exception(
+            _asMap(error)['message']?.toString() ?? 'Backend request failed');
       }
       throw Exception('Backend request failed: HTTP $statusCode');
     }
@@ -308,14 +390,17 @@ List<Map<String, Object?>> _asMapList(Object? value) {
 }
 
 Assignment _assignmentFromJson(Map<String, Object?> json) {
-  final weights = json['checkerWeights'] is Map ? _asMap(json['checkerWeights']) : const <String, Object?>{};
+  final weights = json['checkerWeights'] is Map
+      ? _asMap(json['checkerWeights'])
+      : const <String, Object?>{};
   return Assignment(
     checkerConfig: defaultCheckerConfig.map((item) {
       final rawName = checkerRawName(item.checker);
       final weight = _int(weights[rawName]);
       return item.copyWith(enabled: weight > 0, weight: weight);
     }).toList(),
-    createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ?? DateTime.now(),
+    createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? '') ??
+        DateTime.now(),
     description: json['description']?.toString() ?? '',
     id: json['id'].toString(),
     instructionsMarkdown: json['description']?.toString() ?? '',

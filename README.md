@@ -17,6 +17,8 @@ flutter run --dart-define=AUTOCHECK_API_URL=http://localhost:8080/api/v1
 flutter run --dart-define=AUTOCHECK_API_URL=http://10.0.2.2:8080/api/v1
 ```
 
+Это же значение стоит дефолтом в коде, чтобы Android emulator сразу видел Docker backend на машине. Для Flutter desktop/web лучше явно передать `localhost`.
+
 Если Flutter скажет, что нет platform files (`android`, `ios`, `macos`, `web`), выполните в этой папке:
 
 ```bash
