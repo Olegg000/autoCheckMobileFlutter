@@ -1,6 +1,15 @@
 import 'submission.dart';
 
-/// DTO-слой повторяет имена полей из OpenAPI и отделяет контракт backend от UI-моделей.
+/// Назначение: DTO результата проверки из OpenAPI.
+///
+/// Ответственность/SRP: повторяет имена backend-полей и преобразует
+/// `SubmissionDto` в доменную модель [Submission] без сетевой логики.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [fromJson] читает backend JSON, [toJson] сериализует DTO,
+/// [toDomain] возвращает модель для UI.
 class ApiSubmissionDto {
   const ApiSubmissionDto({
     required this.assignmentId,
@@ -89,7 +98,16 @@ class ApiSubmissionDto {
   }
 }
 
-/// OpenAPI CheckResult: id, checkerType, status, score/log and timestamps.
+/// Назначение: DTO результата отдельного чекера из OpenAPI.
+///
+/// Ответственность/SRP: нормализует статус, балл, лог и длительность чекера
+/// для раскрываемых строк отчёта.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [fromJson] читает backend JSON, [toDomain] возвращает
+/// UI-модель [CheckResult].
 class ApiCheckResultDto {
   const ApiCheckResultDto({
     required this.checkerType,
@@ -133,6 +151,15 @@ class ApiCheckResultDto {
   }
 }
 
+/// Назначение: DTO AI-рекомендаций по проверке.
+///
+/// Ответственность/SRP: хранит поля `/ai-review` и даёт экрану единый fallback,
+/// если AI-сервис недоступен.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [toDomain] возвращает UI-модель [AiReview].
 class ApiAiReviewDto {
   const ApiAiReviewDto({
     required this.available,
@@ -157,6 +184,15 @@ class ApiAiReviewDto {
   }
 }
 
+/// Назначение: тело запроса вердикта эксперта.
+///
+/// Ответственность/SRP: переводит доменный verdict в значения backend
+/// `ACCEPTED/REJECTED`.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [toJson] собирает payload для `PUT /submissions/{id}/verdict`.
 class ApiVerdictRequest {
   const ApiVerdictRequest({required this.verdict, this.comment});
 
@@ -171,6 +207,14 @@ class ApiVerdictRequest {
   }
 }
 
+/// Назначение: DTO агрегированной статистики dashboard.
+///
+/// Ответственность/SRP: переносит метрики `/reports/stats` в виджетную модель.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [toDomain] возвращает [DashboardStats].
 class ApiStatsDto {
   const ApiStatsDto({
     required this.averageScore,

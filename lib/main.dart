@@ -11,6 +11,15 @@ void main() {
   runApp(const AutoCheckApp());
 }
 
+/// Назначение: корневой виджет Flutter-клиента AutoCheck.
+///
+/// Ответственность/SRP: подключает тему, стартовый экран и маршруты основных
+/// сценариев без сетевой и бизнес-логики.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [build] создаёт MaterialApp и карту маршрутов.
 class AutoCheckApp extends StatelessWidget {
   const AutoCheckApp({super.key});
 

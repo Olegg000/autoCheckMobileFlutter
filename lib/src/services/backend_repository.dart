@@ -7,10 +7,18 @@ import '../models/api_contract.dart';
 import '../models/submission.dart';
 import 'app_logger.dart';
 
-/// HTTP repository for the real AutoCheck backend.
+/// Назначение: HTTP-репозиторий для реального AutoCheck backend.
 ///
-/// The backend returns ApiResponse envelopes, so this layer unwraps `data`
-/// and throws readable exceptions from `error.message`.
+/// Ответственность/SRP: хранит JWT, выполняет REST/multipart-запросы,
+/// снимает ApiResponse envelope `{data,error,meta}` и преобразует DTO в
+/// доменные модели экранов. Виджеты не знают о `http` и OpenAPI-полях.
+///
+/// Дата создания: 31-05-2026.
+/// Автор: Команда.
+///
+/// Публичные методы: [login], [register], [assignments], [createAssignment],
+/// [submissions], [createSubmission], [results], [aiReview], [rerun],
+/// [updateVerdict], [report], [stats], [statistics].
 class BackendRepository {
   BackendRepository._();
 
